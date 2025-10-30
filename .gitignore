@@ -4,3 +4,6 @@
 # Compiled output
 dist/
 *.tgz
+
+#miscellaneous
+.TODO
