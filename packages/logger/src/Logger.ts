@@ -1,7 +1,7 @@
 import { ContextLogger } from "./types/ContextLogger.type";
 import { Level } from "./types/Level.type";
 import { Log } from "./types/Log.type";
-import { Transport } from "./Transport/Transport";
+import { Transport, TransportMode } from "./Transport/Transport";
 import { ConsoleTransport } from "./Transport/ConsoleTransport";
 import { DispatcherMode, LogDispatcher } from "./Dispatcher/LogDispatcher";
 import { SyncDispatcher } from "./Dispatcher/SyncDispatcher";
@@ -14,9 +14,9 @@ import { ReactiveDispatcher } from "./Dispatcher/ReactiveDispatcher";
  * - `dispatcher`: set dispatcher mode.
 */
 export type LoggerOptions = Readonly<{
-    minLevel: Level;
-    transports: Transport[];
-    dispatcher: DispatcherMode;
+    minLevel?: Level;
+    transports?: Array<TransportMode | Transport>
+    dispatcher?: DispatcherMode;
 }>;
 
 /**
@@ -29,22 +29,27 @@ export class Logger {
     /** Sequential log ID counter. */
     private counterID = 0;
 
+    private hasTransport = false
+
     /**
      * Creates a new Logger instance.
      * @param options Optional configuration.
      * Defaults: minLevel=Debug, transports=[ConsoleTransport], dispatcher='sync'.
      */
-    constructor(private readonly options: LoggerOptions = {
-        minLevel: Level.Debug,
-        transports: [new ConsoleTransport()],
-        dispatcher: 'sync'
-    }) {
-        switch (this.options.dispatcher) {
-            case "sync":
-                this.dispatcher = new SyncDispatcher(this.options.transports, this.options.minLevel)
+    constructor(readonly options?: LoggerOptions) {
+
+        const minLevel = this.options?.minLevel ?? Level.Debug;
+        const dispatcher = this.options?.dispatcher ?? 'Sync';
+        const transportList = this.updateTransportList(options?.transports ?? ['Console'])
+
+        if (transportList.length > 0) this.hasTransport = true
+
+        switch (dispatcher) {
+            case "Sync":
+                this.dispatcher = new SyncDispatcher(transportList, minLevel)
                 break;
-            case "reactive":
-                this.dispatcher = new ReactiveDispatcher(this.options.transports, this.options.minLevel)
+            case "Reactive":
+                this.dispatcher = new ReactiveDispatcher(transportList, minLevel)
         }
     }
 
@@ -146,15 +151,35 @@ export class Logger {
     }
 
     /**
-     * Sends the log to the dispatcher.
+     * Sends the log to the dispatcher if exist transports.
      * @param level Log severity.
      * @param subject Log subject or category.
      * @param message Log content.
-     * @returns The emitted `Log` object.
+     * @returns Log
      */
     private emit(level: Level, subject: string, message: string): Log {
         const log = this.build(level, subject, message);
+        if (!this.hasTransport) return log
         this.dispatcher.dispatch(log)
         return log;
     }
+
+    /**
+     * Builds and updates the active list of transport instances based on the configured options.
+     * @returns {Transport[]} A new array containing all resolved {@link Transport} instances ready to use.
+     */
+    private updateTransportList(transportOptions: Array<Transport | TransportMode>): Transport[] {
+        const transports: Transport[] = transportOptions.filter(
+            (transport) => typeof transport !== "string"
+        );
+
+        if (transportOptions.includes("Console"))
+            transports.push(new ConsoleTransport());
+
+        if (transportOptions.includes("ConsoleWithEmojis"))
+            transports.push(new ConsoleTransport({ withEmojis: true }));
+
+        return transports;
+    }
+
 }

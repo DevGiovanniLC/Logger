@@ -33,20 +33,9 @@ export class SyncDispatcher implements LogDispatcher {
      */
     dispatch(log: Log): void {
         for (const t of this.transports) {
-            if (this.shouldEmit(log.level)) {
-                t.log(log);
-            }
+            if (log.level > this.minLevel) continue
+            t.log(log);
         }
     }
-
-    /**
-     * Checks whether a log entry should be emitted based
-     * on the configured minimum level.
-     *
-     * @param level Log severity.
-     * @returns `true` if the level is within range; otherwise `false`.
-     */
-    private shouldEmit(level: Level): boolean {
-        return level <= this.minLevel;
-    }
 }
+
