@@ -164,3 +164,55 @@ export class Logger {
     }
 
 }
+
+
+export class AppLogger {
+    private static _instance?: ContextLogger
+    private static _options?: LoggerOptions
+
+    static for(subject: string | object, opts?: LoggerOptions): ContextLogger {
+        return opts ? new Logger(opts).for(subject) : new Logger(this._options).for(subject)
+    }
+
+    static init(opts?: LoggerOptions) {
+        this._instance = new Logger(opts).for('APP')
+        this._options = opts
+    }
+
+    static get instance(): ContextLogger {
+        if (!this._instance) throw new Error('AppLogger.init() requested')
+        return this._instance
+    }
+
+    static emergency(message: string) {
+        return this.instance.emergency(message)
+    }
+
+    static alert(message: string) {
+        return this.instance.alert(message)
+    }
+
+    static critical(message: string) {
+        return this.instance.critical(message)
+    }
+
+    static error(message: string) {
+        return this.instance.error(message)
+    }
+
+    static warn(message: string) {
+        return this.instance.warn(message)
+    }
+
+    static notice(message: string) {
+        return this.instance.notice(message)
+    }
+
+    static info(message: string) {
+        return this.instance.info(message)
+    }
+
+    static debug(message: string) {
+        return this.instance.debug(message)
+    }
+}
