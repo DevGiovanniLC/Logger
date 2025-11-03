@@ -1,11 +1,10 @@
 import { ContextLogger } from "./types/ContextLogger.type";
 import { Level } from "./types/Level.type";
 import { Log } from "./types/Log.type";
-import { Transport, TransportMode } from "./Transport/Transport";
-import { ConsoleTransport } from "./Transport/ConsoleTransport";
 import { DispatcherMode, LogDispatcher } from "./Dispatcher/LogDispatcher";
 import { SyncDispatcher } from "./Dispatcher/SyncDispatcher";
 import { ReactiveDispatcher } from "./Dispatcher/ReactiveDispatcher";
+import { TransportParam, TransportResolver } from "./helpers/TransportResolver";
 
 /**
  * Configuration options for the Logger.
@@ -15,7 +14,7 @@ import { ReactiveDispatcher } from "./Dispatcher/ReactiveDispatcher";
 */
 export type LoggerOptions = Readonly<{
     minLevel?: Level;
-    transports?: Array<TransportMode | Transport>
+    transports?: TransportParam
     dispatcher?: DispatcherMode;
 }>;
 
@@ -40,7 +39,7 @@ export class Logger {
 
         const minLevel = this.options?.minLevel ?? Level.Debug;
         const dispatcher = this.options?.dispatcher ?? 'Sync';
-        const transportList = this.updateTransportList(options?.transports ?? ['Console'])
+        const transportList = TransportResolver.resolve(options?.transports ?? ['Console'])
 
         if (transportList.length > 0) this.hasTransport = true
 
@@ -162,24 +161,6 @@ export class Logger {
         if (!this.hasTransport) return log
         this.dispatcher.dispatch(log)
         return log;
-    }
-
-    /**
-     * Builds and updates the active list of transport instances based on the configured options.
-     * @returns {Transport[]} A new array containing all resolved {@link Transport} instances ready to use.
-     */
-    private updateTransportList(transportOptions: Array<Transport | TransportMode>): Transport[] {
-        const transports: Transport[] = transportOptions.filter(
-            (transport) => typeof transport !== "string"
-        );
-
-        if (transportOptions.includes("Console"))
-            transports.push(new ConsoleTransport());
-
-        if (transportOptions.includes("ConsoleWithEmojis"))
-            transports.push(new ConsoleTransport({ withEmojis: true }));
-
-        return transports;
     }
 
 }
