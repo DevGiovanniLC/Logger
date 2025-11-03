@@ -204,7 +204,7 @@ export class ReactiveDispatcher implements LogDispatcher {
         if (this.disposed || this.buffer.length === 0) return;
 
         // Copy and clear to minimize contention and allow re-entrant dispatch during flush.
-        const batch = this.buffer.splice(0).sort((a, b) => a.level - b.level);
+        const batch = this.buffer.splice(0);
 
         for (const log of batch) {
             // Emit only if it passes the configured threshold.
