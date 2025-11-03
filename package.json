@@ -9,7 +9,7 @@
         "build": "npm -w @giodev/logger run build",
         "clean": "rimraf packages/**/dist",
         "start": "npm -w playground run start",
-        "update": "npm -w playground run update"
+        "update": "npm run pack && npm -w playground run update"
     },
     "devDependencies": {
         "@types/node": "^24.9.2",
