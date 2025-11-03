@@ -107,6 +107,11 @@ export class ReactiveDispatcher implements LogDispatcher {
     private idleTimer?: ReturnType<typeof setTimeout>;
 
     /**
+     * Handler registered for the Node `beforeExit` hook (when enabled).
+     */
+    private beforeExitHandler?: () => void;
+
+    /**
      * MessageChannel ports used for browser scheduling.
      * Only defined when `useMessageChannel` is active and available.
      */
@@ -166,11 +171,12 @@ export class ReactiveDispatcher implements LogDispatcher {
         }
 
         // In Node, ensure a last flush and cleanup just before process exit.
-        if (isNode && (opts?.hookBeforeExit ?? true)) {
-            process.on("beforeExit", () => {
+        if (isNode && typeof process?.on === "function" && (opts?.hookBeforeExit ?? true)) {
+            this.beforeExitHandler = () => {
                 this.flush();
                 this.dispose();
-            });
+            };
+            process.on("beforeExit", this.beforeExitHandler);
         }
     }
 
@@ -251,6 +257,15 @@ export class ReactiveDispatcher implements LogDispatcher {
         if (this.port2) {
             this.port2.close();
             this.port2 = undefined;
+        }
+
+        if (isNode && this.beforeExitHandler) {
+            if (typeof process?.off === "function") {
+                process.off("beforeExit", this.beforeExitHandler);
+            } else if (typeof process?.removeListener === "function") {
+                process.removeListener("beforeExit", this.beforeExitHandler);
+            }
+            this.beforeExitHandler = undefined;
         }
     }
 
