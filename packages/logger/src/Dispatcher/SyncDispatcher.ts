@@ -1,4 +1,4 @@
-import { Transport } from "../Transport/Transport";
+import { LogTransport } from "../Transport/LogTransport";
 import { Level } from "../types/Level.type";
 import { Log } from "../types/Log.type";
 import { LogDispatcher } from "./LogDispatcher";
@@ -21,7 +21,7 @@ export class SyncDispatcher implements LogDispatcher {
      * @param minLevel Minimum log level to emit. Defaults to `Level.Debug`.
      */
     constructor(
-        private readonly transports: Transport[],
+        private readonly transports: LogTransport[],
         private readonly minLevel: Level = Level.Debug
     ) { }
 

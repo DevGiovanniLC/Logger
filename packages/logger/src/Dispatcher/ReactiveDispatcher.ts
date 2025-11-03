@@ -1,4 +1,4 @@
-import { Transport } from "../Transport/Transport";
+import { LogTransport } from "../Transport/LogTransport";
 import { Level } from "../types/Level.type";
 import { Log } from "../types/Log.type";
 import { LogDispatcher } from "./LogDispatcher";
@@ -124,7 +124,7 @@ export class ReactiveDispatcher implements LogDispatcher {
      * @param opts        Optional behavior configuration. See {@link Opts}.
      */
     constructor(
-        private transports: Transport[],
+        private transports: LogTransport[],
         private minLevel: Level = Level.Debug,
         opts?: Opts
     ) {

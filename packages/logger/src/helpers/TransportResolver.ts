@@ -1,11 +1,11 @@
 import { ConsoleTransport } from "../Transport/ConsoleTransport";
-import { Transport, TransportMode } from "../Transport/Transport";
+import { LogTransport, TransportMode } from "../Transport/LogTransport";
 
-export type TransportParam = Array<TransportMode | Transport> | Transport | TransportMode
+export type TransportParam = Array<TransportMode | LogTransport> | LogTransport | TransportMode
 
 export class TransportResolver {
 
-    static resolve(transportParam: TransportParam): Transport[] {
+    static resolve(transportParam: TransportParam): LogTransport[] {
         if (transportParam instanceof Array) {
             return this.resolveFromArray(transportParam)
         } else if (typeof transportParam == 'string') {
@@ -14,8 +14,8 @@ export class TransportResolver {
         return [transportParam] //Transport type
     }
 
-    private static resolveFromArray(transportList: Array<Transport | TransportMode>) {
-        const transports: Transport[] = transportList.filter(
+    private static resolveFromArray(transportList: Array<LogTransport | TransportMode>) {
+        const transports: LogTransport[] = transportList.filter(
             (transport) => typeof transport !== "string"
         );
 
@@ -23,7 +23,7 @@ export class TransportResolver {
             transports.push(new ConsoleTransport());
 
         if (transportList.includes("ConsoleWithEmojis"))
-            transports.push(new ConsoleTransport({ withEmojis: true }));
+            transports.push(new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }));
 
         return transports;
     }
@@ -35,7 +35,7 @@ export class TransportResolver {
             transports.push(new ConsoleTransport());
 
         if (transportMode === "ConsoleWithEmojis")
-            transports.push(new ConsoleTransport({ withEmojis: true }));
+            transports.push(new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }));
 
         return transports
     }

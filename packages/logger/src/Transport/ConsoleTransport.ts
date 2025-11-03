@@ -1,52 +1,25 @@
+import { DefaultConsoleFormatter } from '../Formatter/DefaultConsoleFormatter';
+import { ConsoleFormatterParams } from "../Formatter/DefaultConsoleFormatter";
 import { Level } from "../types/Level.type";
 import { Log } from "../types/Log.type";
-import { Transport } from "./Transport";
+import { LogTransport } from "./LogTransport";
+import { LogFormatter } from '../Formatter/LogFormatter';
 
-type TitleInfo = Readonly<{
-    icon: string;
-    label: string;
-}>;
+type ConsoleTransportParams = {
+    formatter?: LogFormatter
+    defaultFormaterOptions?: ConsoleFormatterParams
+}
 
-export const titleLog = (withEmojis: boolean): readonly TitleInfo[] => {
-    return withEmojis
-        ? [
-            { icon: '\u{1F6A8}', label: 'EMERGENCY' },                    //🚨
-            { icon: '\u{1F691}', label: 'ALERT' },                               //🚑
-            { icon: '\u{1F525}', label: 'CRITICAL' },                          //🔥
-            { icon: '\u{26D4}\u{FE0F}', label: 'ERROR' },                 //⛔️
-            { icon: '\u{26A0}\u{FE0F} ‎', label: 'WARN' },  //⚠️
-            { icon: '\u{1F4E2}', label: 'NOTICE' },                           // 📢
-            { icon: '\u{2139}\u{FE0F} ‎', label: 'INFO' },    //ℹ️
-            { icon: '\u{1F41E}', label: 'DEBUG' },                            //🐞
-        ] as const
-        : [
-            { icon: '[!]', label: 'EMERGENCY' },
-            { icon: '[!]', label: 'ALERT' },
-            { icon: '[!]', label: 'CRITICAL' },
-            { icon: '[X]', label: 'ERROR' },
-            { icon: '[!]', label: 'WARN' },
-            { icon: '[i]', label: 'NOTICE' },
-            { icon: '[i]', label: 'INFO' },
-            { icon: '[DBG]', label: 'DEBUG' },
-        ] as const;
-};
+export class ConsoleTransport implements LogTransport {
+    private readonly ConsoleFormatter: LogFormatter
 
-export const FMT = new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'medium' });
-
-export type ConsoleTransportOptions = {
-    withEmojis: boolean;
-};
-
-export class ConsoleTransport implements Transport {
-
-    constructor(
-        private readonly options: ConsoleTransportOptions = {
-            withEmojis: false,
-        }
-    ) { }
+    constructor(consoleTransportOptions?: ConsoleTransportParams
+    ) {
+        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions ?? { withEmojis: false })
+    }
 
     log(log: Log): void {
-        const text = this.format(log);
+        const text = this.ConsoleFormatter.format(log);
 
         switch (log.level) {
             case Level.Emergency:
@@ -66,11 +39,5 @@ export class ConsoleTransport implements Transport {
                 console.debug(text);
                 break;
         }
-    }
-
-    private format(log: Log): string {
-        const id = `#${String(log.id).padStart(5, '0')}`;
-        const title = titleLog(this.options.withEmojis)[log.level];
-        return `${id} - ${title.icon} ${title.label} (${log.subject}): ${log.message} - ${FMT.format(log.timeStamp)}`;
     }
 }
