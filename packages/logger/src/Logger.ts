@@ -1,3 +1,4 @@
+import { ErrorBuilder } from './helpers/Error';
 import { ContextLogger } from "./types/ContextLogger.type";
 import { Level } from "./types/Level.type";
 import { Log } from "./types/Log.type";
@@ -5,6 +6,7 @@ import { DispatcherMode, LogDispatcher } from "./Dispatcher/LogDispatcher";
 import { SyncDispatcher } from "./Dispatcher/SyncDispatcher";
 import { ReactiveDispatcher } from "./Dispatcher/ReactiveDispatcher";
 import { TransportParam, TransportResolver } from "./helpers/TransportResolver";
+import { buildError } from './helpers/Error';
 
 /**
  * Configuration options for the Logger.
@@ -60,17 +62,33 @@ export class Logger {
      */
     for(ctx: object | string): ContextLogger {
         const subject = typeof ctx === 'string' ? ctx : (ctx?.constructor?.name ?? 'Unknown');
-        const emit = (level: Level, message: string) => this.emit(level, subject, message);
+
+        const makeErrorLevel = (level: Level) => {
+            const levelFn = (a: string | Error | ErrorBuilder, b?: string, c?: ErrorOptions) => {
+                if (typeof a === 'string') return this.emit(level, subject, a);
+
+                const err = buildError(subject, a as any, b, c);
+
+                Error.captureStackTrace?.(err, levelFn);
+                throw err;
+            }
+            return levelFn.bind(this) as any;
+        }
+
+        const makeLevel = (level: Level) => {
+            return ((m: string) => this.emit(level, subject, m)).bind(this);
+        }
 
         return Object.freeze({
-            emergency: (m: string) => emit(Level.Emergency, m),
-            alert: (m: string) => emit(Level.Alert, m),
-            critical: (m: string) => emit(Level.Critical, m),
-            error: (m: string) => emit(Level.Error, m),
-            warn: (m: string) => emit(Level.Warning, m),
-            notice: (m: string) => emit(Level.Notice, m),
-            info: (m: string) => emit(Level.Informational, m),
-            debug: (m: string) => emit(Level.Debug, m),
+            emergency: makeErrorLevel.call(this, Level.Emergency),
+            alert: makeErrorLevel.call(this, Level.Alert),
+            critical: makeErrorLevel.call(this, Level.Critical),
+            error: makeErrorLevel.call(this, Level.Error),
+
+            warn: makeLevel.call(this, Level.Warning),
+            notice: makeLevel.call(this, Level.Notice),
+            info: makeLevel.call(this, Level.Informational),
+            debug: makeLevel.call(this, Level.Debug),
         });
     }
 
@@ -80,7 +98,7 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    emergency(subject: string, message: string): Log { return this.emit(Level.Emergency, subject, message); }
+    emergency(subject: string, message: string): Log { return this.emitError(Level.Emergency, subject, message); }
 
     /**
      * Level 1 - Alert: Immediate action required. (Critical security or system failure)
@@ -88,7 +106,7 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    alert(subject: string, message: string): Log { return this.emit(Level.Alert, subject, message); }
+    alert(subject: string, message: string): Log { return this.emitError(Level.Alert, subject, message); }
 
     /**
      * Level 2 - Critical: Critical condition. (Core component failure)
@@ -96,7 +114,7 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    critical(subject: string, message: string): Log { return this.emit(Level.Critical, subject, message); }
+    critical(subject: string, message: string): Log { return this.emitError(Level.Critical, subject, message); }
 
     /**
      * Level 3 - Error: Error condition. (Exception or failed operation)
@@ -104,7 +122,7 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    error(subject: string, message: string): Log { return this.emit(Level.Error, subject, message); }
+    error(subject: string, message: string): Log { return this.emitError(Level.Error, subject, message); }
 
     /**
      * Level 4 - Warning: Potential risk or degradation.
@@ -163,6 +181,26 @@ export class Logger {
         return log;
     }
 
+    private emitError<E extends Error>(
+        level: Level,
+        subject: string,
+        input: string | Error | ErrorBuilder<E>,
+        msg?: string,
+        opt?: ErrorOptions
+    ): Log | never {
+
+        if (typeof input === 'string') return this.emit(level, subject, input);
+
+        if (input instanceof Error) {
+            Error.captureStackTrace?.(input, this.emitError);
+            throw input;
+        }
+
+        const Err = input as ErrorBuilder<E>;
+        const err = new Err(`(${subject}) : ${msg ?? ''}`.trim(), opt);
+        Error.captureStackTrace?.(err, this.emitError);
+        throw err;
+    }
 }
 
 

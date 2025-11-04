@@ -25,5 +25,3 @@ export enum Level {
     Debug   // Debug-level message
 }
 
-
-
