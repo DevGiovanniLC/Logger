@@ -4,4 +4,4 @@ export interface LogDispatcher {
     dispatch(log: Log): void;
 }
 
-export type DispatcherMode = 'Sync' | 'Reactive'
+export type DispatcherMode = 'sync' | 'reactive'

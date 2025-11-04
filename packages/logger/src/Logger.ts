@@ -38,16 +38,16 @@ export class Logger {
     constructor(readonly options?: LoggerOptions) {
 
         const minLevel = this.options?.minLevel ?? Level.Debug;
-        const dispatcher = this.options?.dispatcher ?? 'Sync';
+        const dispatcher = this.options?.dispatcher ?? 'sync';
         const transportList = TransportResolver.resolve(options?.transports ?? ['console'])
 
         if (transportList.length > 0) this.hasTransport = true
 
         switch (dispatcher) {
-            case "Sync":
+            case "sync":
                 this.dispatcher = new SyncDispatcher(transportList, minLevel)
                 break;
-            case "Reactive":
+            case "reactive":
                 this.dispatcher = new ReactiveDispatcher(transportList, minLevel)
         }
     }
