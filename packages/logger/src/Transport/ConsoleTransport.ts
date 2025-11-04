@@ -15,7 +15,7 @@ export class ConsoleTransport implements LogTransport {
 
     constructor(consoleTransportOptions?: ConsoleTransportParams
     ) {
-        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions ?? { withEmojis: false })
+        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions)
     }
 
     log(log: Log): void {

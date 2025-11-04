@@ -1,3 +1,4 @@
+import { LevelColor } from "../helpers/Colors";
 import { Log } from "../types/Log.type";
 import { LogFormatter } from "./LogFormatter";
 
@@ -33,13 +34,18 @@ const titleLog = (withEmojis: boolean): readonly TitleInfo[] => {
 export type ConsoleFormatterParams = {
     withEmojis?: boolean;
     localeDate?: Intl.LocalesArgument
+    styled?: boolean
 };
 
 export class DefaultConsoleFormatter implements LogFormatter {
     private dateFormatter
 
     constructor(
-        private readonly formatterOptions: ConsoleFormatterParams
+        private readonly formatterOptions: ConsoleFormatterParams = {
+            styled: false,
+            localeDate: undefined,
+            withEmojis: false
+        }
     ) {
         this.dateFormatter = new Intl.DateTimeFormat(formatterOptions.localeDate, { dateStyle: 'short', timeStyle: 'medium' });
     }
@@ -47,6 +53,8 @@ export class DefaultConsoleFormatter implements LogFormatter {
     format(log: Log): string {
         const id = `#${String(log.id).padStart(5, '0')}`;
         const title = titleLog(this.formatterOptions.withEmojis ?? false)[log.level];
-        return `${id} - ${title.icon} ${title.label} (${log.subject}): ${log.message} - ${this.dateFormatter.format(log.timeStamp)}`;
+        return LevelColor[this.formatterOptions.styled ? log.level : 8](
+            `${id} - ${title.icon} ${title.label} (${log.subject}): ${log.message} - ${this.dateFormatter.format(log.timeStamp)}`
+        );
     }
 }
