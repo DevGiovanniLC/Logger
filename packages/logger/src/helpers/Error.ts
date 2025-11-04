@@ -7,5 +7,5 @@ export function buildError<E extends Error>(
     options?: ErrorOptions
 ): Error {
     if (input instanceof Error) return input;
-    return new input(`(${subject}) : ${message ?? ''}`.trim(), options);
+    return new input(`(${subject}) ${message ? `- ${message}` : ''}`.trim(), options);
 }
