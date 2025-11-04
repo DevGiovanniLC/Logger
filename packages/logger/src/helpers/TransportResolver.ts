@@ -19,11 +19,17 @@ export class TransportResolver {
             (transport) => typeof transport !== "string"
         );
 
-        if (transportList.includes("Console"))
+        if (transportList.includes("console"))
             transports.push(new ConsoleTransport());
 
-        if (transportList.includes("ConsoleWithEmojis"))
+        if (transportList.includes("console-emoji"))
             transports.push(new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }));
+
+        if (transportList.includes("console-color"))
+            transports.push(new ConsoleTransport({ defaultFormaterOptions: { color: true } }));
+
+        if (transportList.includes("console-styled"))
+            transports.push(new ConsoleTransport({ defaultFormaterOptions: { color: true, withEmojis: true } }));
 
         return transports;
     }
@@ -31,11 +37,20 @@ export class TransportResolver {
     private static resolveFromMode(transportMode: TransportMode) {
         const transports = []
 
-        if (transportMode === "Console")
-            transports.push(new ConsoleTransport());
-
-        if (transportMode === "ConsoleWithEmojis")
-            transports.push(new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }));
+        switch (transportMode) {
+            case "console":
+                transports.push(new ConsoleTransport());
+                break
+            case "console-emoji":
+                transports.push(new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }));
+                break
+            case "console-color":
+                transports.push(new ConsoleTransport({ defaultFormaterOptions: { color: true } }));
+                break
+            case "console-styled":
+                transports.push(new ConsoleTransport({ defaultFormaterOptions: { color: true, withEmojis: true } }));
+                break
+        }
 
         return transports
     }

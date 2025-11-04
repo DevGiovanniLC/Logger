@@ -39,7 +39,7 @@ export class Logger {
 
         const minLevel = this.options?.minLevel ?? Level.Debug;
         const dispatcher = this.options?.dispatcher ?? 'Sync';
-        const transportList = TransportResolver.resolve(options?.transports ?? ['Console'])
+        const transportList = TransportResolver.resolve(options?.transports ?? ['console'])
 
         if (transportList.length > 0) this.hasTransport = true
 

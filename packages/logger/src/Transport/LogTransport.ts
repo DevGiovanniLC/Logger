@@ -4,4 +4,4 @@ export interface LogTransport {
     log(log: Log): void;
 }
 
-export type TransportMode = 'Console' | 'ConsoleWithEmojis'
+export type TransportMode = 'console' | 'console-emoji' | 'console-color' | 'console-styled'
