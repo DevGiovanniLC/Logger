@@ -168,20 +168,23 @@ export class Logger {
 
 export class AppLogger {
     private static _instance?: ContextLogger
+    private static _logger?: Logger
     private static _options?: LoggerOptions
 
     static for(subject: string | object, opts?: LoggerOptions): ContextLogger {
-        return opts ? new Logger(opts).for(subject) : new Logger(this._options).for(subject)
+        if (opts) return new Logger(opts).for(subject)
+        return this.ensureLogger().for(subject)
     }
 
     static init(opts?: LoggerOptions) {
-        this._instance = new Logger(opts).for('APP')
         this._options = opts
+        this._logger = new Logger(opts)
+        this._instance = this._logger.for('APP')
     }
 
     static get instance(): ContextLogger {
-        if (!this._instance) throw new Error('AppLogger.init() requested')
-        return this._instance
+        if (this._instance) return this._instance
+        return (this._instance = this.ensureLogger().for('APP'))
     }
 
     static emergency(message: string) {
@@ -214,5 +217,13 @@ export class AppLogger {
 
     static debug(message: string) {
         return this.instance.debug(message)
+    }
+
+    private static ensureLogger(): Logger {
+        if (this._logger) return this._logger
+        if (!this._options) throw new Error('AppLogger.init() requested')
+        this._logger = new Logger(this._options)
+        this._instance = this._logger.for('APP')
+        return this._logger
     }
 }
