@@ -10,8 +10,8 @@ type TitleInfo = Readonly<{
 const titleLog = (withEmojis: boolean): readonly TitleInfo[] => {
     return withEmojis
         ? [
-            { icon: '\u{1F6A8}', label: 'EMERGENCY' },                    //🚨
-            { icon: '\u{1F691}', label: 'ALERT' },                               //🚑
+            { icon: '\uD83C\uDD98', label: 'EMERGENCY' },           //🆘
+            { icon: '\u{1F6A8}', label: 'ALERT' },                               //🚨
             { icon: '\u{1F525}', label: 'CRITICAL' },                          //🔥
             { icon: '\u{26D4}\u{FE0F}', label: 'ERROR' },                 //⛔️
             { icon: '\u{26A0}\u{FE0F} ‎', label: 'WARN' },  //⚠️
