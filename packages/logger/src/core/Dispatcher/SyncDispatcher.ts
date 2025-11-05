@@ -1,7 +1,7 @@
-import { LogTransport } from "../Transport/LogTransport";
-import { Level } from "../types/Level.type";
-import { Log } from "../types/Log.type";
+import { LogTransport } from "@core/Transport/LogTransport";
 import { LogDispatcher } from "./LogDispatcher";
+import { Level } from "@models/Level.type";
+import { Log } from "@models/Log.type";
 
 /**
  * Synchronous log dispatcher.
@@ -15,15 +15,16 @@ import { LogDispatcher } from "./LogDispatcher";
  * over non-blocking performance.
  */
 export class SyncDispatcher implements LogDispatcher {
+    private readonly transports: readonly LogTransport[];
+
     /**
      * Creates a new synchronous dispatcher.
      * @param transports Array of active transports that will receive log events.
      * @param minLevel Minimum log level to emit. Defaults to `Level.Debug`.
      */
-    constructor(
-        private readonly transports: LogTransport[],
-        private readonly minLevel: Level = Level.Debug
-    ) { }
+    constructor(transports: LogTransport[], private readonly minLevel: Level = Level.Debug) {
+        this.transports = transports.slice();
+    }
 
     /**
      * Dispatches a single log entry to all transports that
@@ -32,9 +33,10 @@ export class SyncDispatcher implements LogDispatcher {
      * @param log The log object to process.
      */
     dispatch(log: Log): void {
-        for (const t of this.transports) {
-            if (log.level > this.minLevel) continue
-            t.log(log);
+        if (log.level > this.minLevel || this.transports.length === 0) return;
+
+        for (const transport of this.transports) {
+            transport.log(log);
         }
     }
 }

@@ -1,93 +1,50 @@
-import { buildError, ErrorBuilder } from "./helpers/Error";
-import { ContextLogger } from "./types/ContextLogger.type";
-import { Level } from "./types/Level.type";
-import { Log } from "./types/Log.type";
-import { DispatcherMode, LogDispatcher } from "./Dispatcher/LogDispatcher";
-import { SyncDispatcher } from "./Dispatcher/SyncDispatcher";
-import { ReactiveDispatcher } from "./Dispatcher/ReactiveDispatcher";
-import { TransportParam, TransportResolver } from "./helpers/TransportResolver";
+import { DISPATCHER_FACTORIES, DispatcherMode, LogDispatcher, normalizeDispatcher } from "@core/Dispatcher/LogDispatcher";
+import { ERROR_LEVEL_ENTRIES, ErrorLevelKey, INFO_LEVEL_ENTRIES, InfoLevelKey, Level } from "@models/Level.type";
+import { ContextLogger } from "@models/ContextLogger.type";
+import { Log } from "@models/Log.type";
+import { buildError, ErrorBuilder } from "@helpers/ErrorHandler";
+import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
+import { normalizeMessage } from "@utils/MessageNormalizer";
 
-/**
- * Configuration options for the Logger.
- * - `minLevel`: logs with a level greater than this will be ignored.
- * - `transports`: output destinations that handle emitted logs.
- * - `dispatcher`: set dispatcher mode.
-*/
+
+
+const DEFAULT_TRANSPORTS: TransportParam = ["console"];
+
+const resolveSubject = (ctx: object | string): string => {
+    if (typeof ctx === "string") return ctx;
+    const name = ctx?.constructor?.name;
+    return typeof name === "string" && name.length > 0 ? name : "Unknown";
+};
+
 export type LoggerOptions = Readonly<{
     minLevel?: Level;
-    transports?: TransportParam
+    transports?: TransportParam;
     dispatcher?: DispatcherMode;
 }>;
 
-/**
- * Transport-based logger using RFC 5424 levels (0–7).
- * Dispatching is delegated to a pluggable dispatcher.
- */
-export class Logger {
-    private readonly dispatcher: LogDispatcher
 
-    /** Sequential log ID counter. */
+export class Logger {
+    private readonly dispatcher: LogDispatcher;
+    private readonly hasTransport: boolean;
+
+
     private counterID = 0;
 
-    private hasTransport = false
 
-    /**
-     * Creates a new Logger instance.
-     * @param options Optional configuration.
-     * Defaults: minLevel=Debug, transports=[ConsoleTransport], dispatcher='sync'.
-     */
     constructor(readonly options?: LoggerOptions) {
+        const minLevel = options?.minLevel ?? Level.Debug;
+        const transports = TransportResolver.resolve(options?.transports ?? DEFAULT_TRANSPORTS);
 
-        const minLevel = this.options?.minLevel ?? Level.Debug;
-        const dispatcherOption = (this.options?.dispatcher ?? "Sync").toString();
-        const dispatcher = dispatcherOption.toLowerCase();
-        const transportList = TransportResolver.resolve(options?.transports ?? ['console'])
+        this.hasTransport = transports.length > 0;
 
-        if (transportList.length > 0) this.hasTransport = true
-
-        switch (dispatcher) {
-            case "sync":
-                this.dispatcher = new SyncDispatcher(transportList, minLevel)
-                break;
-            case "reactive":
-                this.dispatcher = new ReactiveDispatcher(transportList, minLevel)
-                break;
-            default:
-                throw new Error(`Unsupported dispatcher mode "${dispatcherOption}". Expected "sync" or "reactive".`)
-        }
+        const dispatcherKey = normalizeDispatcher(options?.dispatcher);
+        this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel);
     }
 
-    /**
-     * Creates a contextual logger tied to a class name or custom string.
-     * Each call returns an immutable object with the same log-level API.
-     * @param ctx Object or string representing the log context.
-     * @returns A frozen `ContextLogger` with contextualized output.
-     */
+
     for(ctx: object | string): ContextLogger {
-        const subject = typeof ctx === 'string' ? ctx : (ctx?.constructor?.name ?? 'Unknown');
-
-        const makeErrorLevel = (level: Level): ContextLogger["emergency"] => {
-            const handler = ((input: unknown, maybeMessage?: unknown, maybeOptions?: ErrorOptions) =>
-                this.handleErrorLevel(level, subject, input, maybeMessage, maybeOptions, handler)
-            ) as ContextLogger["emergency"];
-
-            return handler;
-        };
-
-        const makeLevel = (level: Level) => {
-            return (message: unknown) => this.emit(level, subject, message);
-        };
-
-        return Object.freeze({
-            emergency: makeErrorLevel(Level.Emergency),
-            alert: makeErrorLevel(Level.Alert),
-            critical: makeErrorLevel(Level.Critical),
-            error: makeErrorLevel(Level.Error),
-            warn: makeLevel(Level.Warning),
-            notice: makeLevel(Level.Notice),
-            info: makeLevel(Level.Informational),
-            debug: makeLevel(Level.Debug),
-        });
+        const subject = resolveSubject(ctx);
+        return this.createContextLogger(subject);
     }
 
     /**
@@ -98,7 +55,12 @@ export class Logger {
      */
     emergency(subject: string, message: unknown): Log;
     emergency(subject: string, error: Error): never;
-    emergency<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
+    emergency<E extends Error>(
+        subject: string,
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions
+    ): never;
     emergency(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
         return this.handleErrorLevel(Level.Emergency, subject, input, message, opt, Logger.prototype.emergency);
     }
@@ -124,7 +86,12 @@ export class Logger {
      */
     critical(subject: string, message: unknown): Log;
     critical(subject: string, error: Error): never;
-    critical<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
+    critical<E extends Error>(
+        subject: string,
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions
+    ): never;
     critical(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
         return this.handleErrorLevel(Level.Critical, subject, input, message, opt, Logger.prototype.critical);
     }
@@ -148,7 +115,9 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    warn(subject: string, message: unknown): Log { return this.emit(Level.Warning, subject, message); }
+    warn(subject: string, message: unknown): Log {
+        return this.emit(Level.Warning, subject, message);
+    }
 
     /**
      * Level 5 - Notice: Significant but normal event. (Configuration change, startup, shutdown)
@@ -156,7 +125,9 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    notice(subject: string, message: unknown): Log { return this.emit(Level.Notice, subject, message); }
+    notice(subject: string, message: unknown): Log {
+        return this.emit(Level.Notice, subject, message);
+    }
 
     /**
      * Level 6 - Informational: General informational message.
@@ -164,7 +135,9 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    info(subject: string, message: unknown): Log { return this.emit(Level.Informational, subject, message); }
+    info(subject: string, message: unknown): Log {
+        return this.emit(Level.Informational, subject, message);
+    }
 
     /**
      * Level 7 - Debug: Detailed debug information. (Development diagnostics)
@@ -172,7 +145,9 @@ export class Logger {
      * @param message Detailed event description.
      * @returns Created log object.
      */
-    debug(subject: string, message: unknown): Log { return this.emit(Level.Debug, subject, message); }
+    debug(subject: string, message: unknown): Log {
+        return this.emit(Level.Debug, subject, message);
+    }
 
     /**
      * Builds an immutable log object with metadata.
@@ -185,18 +160,34 @@ export class Logger {
         return { id: ++this.counterID, level, subject, message, timeStamp: Date.now() } as const;
     }
 
-    /**
-     * Sends the log to the dispatcher if exist transports.
-     * @param level Log severity.
-     * @param subject Log subject or category.
-     * @param message Log content.
-     * @returns Log
-     */
+
     private emit(level: Level, subject: string, message: unknown): Log {
-        const log = this.build(level, subject, this.normalizeMessage(message));
-        if (!this.hasTransport) return log
-        this.dispatcher.dispatch(log)
+        const log = this.build(level, subject, normalizeMessage(message));
+        if (!this.hasTransport) return log;
+        this.dispatcher.dispatch(log);
         return log;
+    }
+
+    private createContextLogger(subject: string): ContextLogger {
+        const context: Record<string, unknown> = {};
+
+        for (const [name, level] of ERROR_LEVEL_ENTRIES) {
+            context[name] = this.createErrorHandler(level, subject);
+        }
+
+        for (const [name, level] of INFO_LEVEL_ENTRIES) {
+            context[name] = (message: unknown) => this.emit(level, subject, message);
+        }
+
+        return Object.freeze(context) as ContextLogger;
+    }
+
+    private createErrorHandler(level: Level, subject: string): ContextLogger["emergency"] {
+        const handler = ((input: unknown, maybeMessage?: unknown, maybeOptions?: ErrorOptions) =>
+            this.handleErrorLevel(level, subject, input, maybeMessage, maybeOptions, handler)
+        ) as ContextLogger["emergency"];
+
+        return handler;
     }
 
     private handleErrorLevel<E extends Error>(
@@ -213,7 +204,7 @@ export class Logger {
         }
 
         if (Logger.isErrorBuilder(input)) {
-            const normalizedMessage = message === undefined ? undefined : this.normalizeMessage(message);
+            const normalizedMessage = message === undefined ? undefined : normalizeMessage(message);
             const err = buildError(subject, input, normalizedMessage, opt);
             this.captureStack(err, stackContext);
             throw err;
@@ -233,114 +224,92 @@ export class Logger {
         if (!prototype) return false;
         return prototype === Error.prototype || Error.prototype.isPrototypeOf(prototype);
     }
-
-    private normalizeMessage(message: unknown): string {
-        if (typeof message === "string") return message;
-        if (message instanceof Error) return message.stack ?? `${message.name}: ${message.message}`;
-        if (message === undefined) return "undefined";
-        if (message === null) return "null";
-        if (typeof message === "number" || typeof message === "boolean" || typeof message === "bigint" || typeof message === "symbol") {
-            return String(message);
-        }
-        if (typeof message === "function") {
-            return message.name ? `[function ${message.name}]` : message.toString();
-        }
-        if (typeof message === "object") {
-            return this.stringifyObject(message);
-        }
-        return String(message);
-    }
-
-    private stringifyObject(value: object): string {
-        const seen = new WeakSet<object>();
-        try {
-            const result = JSON.stringify(value, (_key, val) => {
-                if (typeof val === "bigint" || typeof val === "symbol") return String(val);
-                if (typeof val === "function") return val.name ? `[function ${val.name}]` : "[function]";
-                if (val && typeof val === "object") {
-                    if (seen.has(val as object)) return "[Circular]";
-                    seen.add(val as object);
-                }
-                return val;
-            });
-            return result ?? Object.prototype.toString.call(value);
-        } catch {
-            return Object.prototype.toString.call(value);
-        }
-    }
 }
 
-
 export class AppLogger {
-    private static _instance?: ContextLogger
-    private static _logger?: Logger
-    private static _options?: LoggerOptions
+    private static _instance?: ContextLogger;
+    private static _logger?: Logger;
+    private static _options?: LoggerOptions;
 
     static for(subject: string | object, opts?: LoggerOptions): ContextLogger {
-        if (opts) return new Logger(opts).for(subject)
-        return this.ensureLogger().for(subject)
+        if (opts) return new Logger(opts).for(subject);
+        return this.ensureLogger().for(subject);
     }
 
     static init(opts?: LoggerOptions) {
-        this._options = opts
-        this._logger = new Logger(opts)
-        this._instance = this._logger.for('APP')
+        this._options = opts;
+        this._logger = new Logger(opts);
+        this._instance = this._logger.for("APP");
     }
 
     static get instance(): ContextLogger {
-        if (this._instance) return this._instance
-        return (this._instance = this.ensureLogger().for('APP'))
+        if (this._instance) return this._instance;
+        return (this._instance = this.ensureLogger().for("APP"));
     }
 
     static emergency(message: unknown): Log;
     static emergency(error: Error): never;
     static emergency<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     static emergency(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return (this.instance.emergency as any)(input, message, opt);
+        return this.forwardErrorLevel("emergency", input, message, opt);
     }
 
     static alert(message: unknown): Log;
     static alert(error: Error): never;
     static alert<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     static alert(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return (this.instance.alert as any)(input, message, opt);
+        return this.forwardErrorLevel("alert", input, message, opt);
     }
 
     static critical(message: unknown): Log;
     static critical(error: Error): never;
     static critical<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     static critical(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return (this.instance.critical as any)(input, message, opt);
+        return this.forwardErrorLevel("critical", input, message, opt);
     }
 
     static error(message: unknown): Log;
     static error(error: Error): never;
     static error<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     static error(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return (this.instance.error as any)(input, message, opt);
+        return this.forwardErrorLevel("error", input, message, opt);
     }
 
-    static warn(message: unknown) {
-        return this.instance.warn(message)
+    static warn(message: unknown): Log {
+        return this.forwardLevel("warn", message);
     }
 
-    static notice(message: unknown) {
-        return this.instance.notice(message)
+    static notice(message: unknown): Log {
+        return this.forwardLevel("notice", message);
     }
 
-    static info(message: unknown) {
-        return this.instance.info(message)
+    static info(message: unknown): Log {
+        return this.forwardLevel("info", message);
     }
 
-    static debug(message: unknown) {
-        return this.instance.debug(message)
+    static debug(message: unknown): Log {
+        return this.forwardLevel("debug", message);
+    }
+
+    private static forwardErrorLevel(
+        key: ErrorLevelKey,
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions
+    ): Log | never {
+        const handler = this.instance[key] as ContextLogger[ErrorLevelKey];
+        return (handler as any)(input, message, opt);
+    }
+
+    private static forwardLevel(key: InfoLevelKey, message: unknown): Log {
+        return this.instance[key](message);
     }
 
     private static ensureLogger(): Logger {
-        if (this._logger) return this._logger
-        if (!this._options) throw new Error('AppLogger.init() requested')
-        this._logger = new Logger(this._options)
-        this._instance = this._logger.for('APP')
-        return this._logger
+        if (this._logger) return this._logger;
+        if (!this._options) throw new Error("AppLogger.init() requested");
+        this._logger = new Logger(this._options);
+        this._instance = this._logger.for("APP");
+        return this._logger;
     }
 }

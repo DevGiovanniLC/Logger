@@ -1,7 +1,7 @@
-import { LogTransport } from "../Transport/LogTransport";
-import { Level } from "../types/Level.type";
-import { Log } from "../types/Log.type";
+import { Log } from "@models/Log.type";
 import { LogDispatcher } from "./LogDispatcher";
+import { Level } from "@models/Level.type";
+import { LogTransport } from "@core/Transport/LogTransport";
 
 const isNode = typeof process !== "undefined" && !!process.versions?.node;
 
@@ -57,7 +57,7 @@ export type Opts = {
  *
  * ### Level filtering
  * - A log is emitted only if its `level <= minLevel`. Adjust if your enum uses a different ordering.
-*/
+ */
 export class ReactiveDispatcher implements LogDispatcher {
     /**
      * In-memory buffer of pending log records.
@@ -94,7 +94,17 @@ export class ReactiveDispatcher implements LogDispatcher {
      * Scheduling function used to plan the next {@link flush}.
      * Implemented via `MessageChannel` or `setTimeout`.
      */
-    private schedule!: () => void;
+    private readonly schedule: () => void;
+
+    /**
+     * Destination transports that will receive emitted logs.
+     */
+    private readonly transports: readonly LogTransport[];
+
+    /**
+     * Minimum level to emit. A log is emitted when `log.level <= minLevel`.
+     */
+    private readonly minLevel: Level;
 
     /**
      * Handle for the scheduled flush timer (when using `setTimeout`).
@@ -128,49 +138,19 @@ export class ReactiveDispatcher implements LogDispatcher {
      * @param minLevel    Minimum level to emit. A log is emitted when `log.level <= minLevel`.
      * @param opts        Optional behavior configuration. See {@link Opts}.
      */
-    constructor(
-        private transports: LogTransport[],
-        private minLevel: Level = Level.Debug,
-        opts?: Opts
-    ) {
+    constructor(transports: LogTransport[], minLevel: Level = Level.Debug, opts?: Opts) {
+        this.transports = transports.slice();
+        this.minLevel = minLevel;
         this.flushInterval = opts?.intervalMs ?? 50;
         this.idleTimeout = opts?.idleMs ?? 5000;
         this.unrefTimers = opts?.unrefTimers ?? true;
 
-        const useChannel =
+        const preferChannel =
             (opts?.useMessageChannel ?? (!isNode && typeof MessageChannel !== "undefined")) &&
             typeof MessageChannel !== "undefined";
 
-        if (useChannel) {
-            const ch = new MessageChannel();
-            this.port1 = ch.port1;
-            this.port2 = ch.port2;
+        this.schedule = preferChannel ? this.createChannelScheduler() : this.createTimerScheduler();
 
-            // Flush runs on the microtask-like callback when the message arrives.
-            this.port1.onmessage = () => this.flush();
-
-            // Only schedule if not already scheduled or disposed.
-            this.schedule = () => {
-                if (!this.scheduled && !this.disposed) {
-                    this.scheduled = true;
-                    this.port2!.postMessage(0);
-                }
-            };
-        } else {
-            // Fallback scheduling with setTimeout (universal; works in Node and browsers).
-            this.schedule = () => {
-                if (this.scheduled || this.disposed) return;
-                this.scheduled = true;
-                this.timer = setTimeout(() => this.flush(), this.flushInterval);
-
-                // In Node, allow the process to exit naturally if nothing else is pending.
-                if (isNode && this.unrefTimers && typeof (this.timer as any).unref === "function") {
-                    (this.timer as any).unref();
-                }
-            };
-        }
-
-        // In Node, ensure a last flush and cleanup just before process exit.
         if (isNode && typeof process?.on === "function" && (opts?.hookBeforeExit ?? true)) {
             this.beforeExitHandler = () => {
                 this.flush();
@@ -186,7 +166,7 @@ export class ReactiveDispatcher implements LogDispatcher {
      * @param log The log record to enqueue.
      */
     dispatch(log: Log): void {
-        if (this.disposed) return;
+        if (this.disposed || this.transports.length === 0 || log.level > this.minLevel) return;
         this.buffer.push(log);
         this.schedule();
         this.resetIdleTimer();
@@ -213,17 +193,17 @@ export class ReactiveDispatcher implements LogDispatcher {
         const batch = this.buffer.splice(0);
 
         for (const log of batch) {
-            // Emit only if it passes the configured threshold.
             if (log.level > this.minLevel) continue;
 
-            for (const t of this.transports) {
+            for (const transport of this.transports) {
                 try {
-                    t.log(log);
+                    transport.log(log);
                 } catch {
                     // Swallow transport errors to avoid blocking subsequent logs.
                 }
             }
         }
+
         this.resetIdleTimer();
     }
 
@@ -234,6 +214,7 @@ export class ReactiveDispatcher implements LogDispatcher {
     private dispose(): void {
         if (this.disposed) return;
         this.disposed = true;
+        this.scheduled = false;
 
         // Drop any pending entries to avoid re-scheduling.
         this.buffer.length = 0;
@@ -273,12 +254,38 @@ export class ReactiveDispatcher implements LogDispatcher {
      * Restart the inactivity timer. When it fires, the dispatcher is disposed.
      */
     private resetIdleTimer(): void {
+        if (this.disposed) return;
         if (this.idleTimer) clearTimeout(this.idleTimer);
         this.idleTimer = setTimeout(() => this.dispose(), this.idleTimeout);
+        this.maybeUnref(this.idleTimer);
+    }
 
-        // In Node, let the process exit even if the idle timer is pending.
-        if (isNode && this.unrefTimers && typeof (this.idleTimer as any).unref === "function") {
-            (this.idleTimer as any).unref();
-        }
+    private createChannelScheduler(): () => void {
+        const channel = new MessageChannel();
+        this.port1 = channel.port1;
+        this.port2 = channel.port2;
+
+        this.port1.onmessage = () => this.flush();
+
+        return () => {
+            if (this.scheduled || this.disposed) return;
+            this.scheduled = true;
+            this.port2?.postMessage(0);
+        };
+    }
+
+    private createTimerScheduler(): () => void {
+        return () => {
+            if (this.scheduled || this.disposed) return;
+            this.scheduled = true;
+            this.timer = setTimeout(() => this.flush(), this.flushInterval);
+            this.maybeUnref(this.timer);
+        };
+    }
+
+    private maybeUnref(timer?: ReturnType<typeof setTimeout>): void {
+        if (!isNode || !this.unrefTimers || !timer) return;
+        const unref = (timer as any).unref;
+        if (typeof unref === "function") unref.call(timer);
     }
 }

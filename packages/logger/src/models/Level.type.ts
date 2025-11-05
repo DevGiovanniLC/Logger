@@ -25,3 +25,20 @@ export enum Level {
     Debug   // Debug-level message
 }
 
+export type ErrorLevelKey = "emergency" | "alert" | "critical" | "error";
+export type InfoLevelKey = "warn" | "notice" | "info" | "debug";
+
+
+export const ERROR_LEVEL_ENTRIES: ReadonlyArray<[ErrorLevelKey, Level]> = [
+    ["emergency", Level.Emergency],
+    ["alert", Level.Alert],
+    ["critical", Level.Critical],
+    ["error", Level.Error],
+];
+
+export const INFO_LEVEL_ENTRIES: ReadonlyArray<[InfoLevelKey, Level]> = [
+    ["warn", Level.Warning],
+    ["notice", Level.Notice],
+    ["info", Level.Informational],
+    ["debug", Level.Debug],
+];

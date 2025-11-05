@@ -1,9 +1,9 @@
-import { DefaultConsoleFormatter } from '../Formatter/DefaultConsoleFormatter';
-import { ConsoleFormatterParams } from "../Formatter/DefaultConsoleFormatter";
-import { Level } from "../types/Level.type";
-import { Log } from "../types/Log.type";
-import { LogTransport } from "./LogTransport";
-import { LogFormatter } from '../Formatter/LogFormatter';
+import { ConsoleFormatterParams, DefaultConsoleFormatter } from "@core/Formatter/DefaultConsoleFormatter"
+import { LogFormatter } from "@core/Formatter/LogFormatter"
+import { LogTransport } from "./LogTransport"
+import { Log } from "@models/Log.type"
+import { Level } from "@models/Level.type"
+
 
 type ConsoleTransportParams = {
     formatter?: LogFormatter

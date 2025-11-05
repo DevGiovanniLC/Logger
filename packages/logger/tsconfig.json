@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "declaration": true,
+        "skipLibCheck": true,
+        "baseUrl": "./src",
+        "paths": {
+            "@core/*": [
+                "core/*"
+            ],
+            "@models/*": [
+                "models/*"
+            ],
+            "@utils/*": [
+                "utils/*"
+            ],
+            "@helpers/*": [
+                "helpers/*"
+            ],
+        }
+    }
+}

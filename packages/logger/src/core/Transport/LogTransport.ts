@@ -1,4 +1,4 @@
-import { Log } from "../types/Log.type";
+import { Log } from "@models/Log.type";
 
 export interface LogTransport {
     log(log: Log): void;

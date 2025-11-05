@@ -1,5 +1,6 @@
-import { ErrorBuilder } from "../helpers/Error";
+import { ErrorBuilder } from "@helpers/ErrorHandler";
 import { Log } from "./Log.type";
+
 
 export type LevelFn = (message: unknown) => Log;
 
