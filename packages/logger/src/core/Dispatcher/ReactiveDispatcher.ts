@@ -278,6 +278,10 @@ export class ReactiveDispatcher implements LogDispatcher {
         this.maybeUnref(this.idleTimer);
     }
 
+    /**
+     * Create a `MessageChannel`-based scheduler suitable for browsers.
+     * @returns Function that schedules a single pending flush.
+     */
     private createChannelScheduler(): () => void {
         const channel = new MessageChannel();
         this.port1 = channel.port1;
@@ -292,6 +296,10 @@ export class ReactiveDispatcher implements LogDispatcher {
         };
     }
 
+    /**
+     * Create a timer-based scheduler suitable for Node.js environments.
+     * @returns Function that schedules a single pending flush.
+     */
     private createTimerScheduler(): () => void {
         return () => {
             if (this.scheduled || this.disposed) return;
@@ -301,6 +309,10 @@ export class ReactiveDispatcher implements LogDispatcher {
         };
     }
 
+    /**
+     * Call `unref()` on Node timers when available so they do not hold the event-loop open.
+     * @param timer Timer handle returned by `setTimeout`.
+     */
     private maybeUnref(timer?: ReturnType<typeof setTimeout>): void {
         if (!isNode || !this.unrefTimers || !timer) return;
         const unref = (timer as any).unref;

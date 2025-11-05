@@ -5,19 +5,33 @@ import { Log } from "@models/Log.type"
 import { Level } from "@models/Level.type"
 
 
+/**
+ * Configuration for {@link ConsoleTransport}.
+ */
 type ConsoleTransportParams = {
     formatter?: LogFormatter
     defaultFormaterOptions?: ConsoleFormatterParams
 }
 
+/**
+ * Transport that writes formatted logs to the host console.
+ */
 export class ConsoleTransport implements LogTransport {
     private readonly ConsoleFormatter: LogFormatter
 
+    /**
+     * Create a console transport.
+     * @param consoleTransportOptions Optional custom formatter or formatter options.
+     */
     constructor(consoleTransportOptions?: ConsoleTransportParams
     ) {
         this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions)
     }
 
+    /**
+     * Output the provided log through the appropriate console channel.
+     * @param log Structured log entry to write.
+     */
     log(log: Log): void {
         const text = this.ConsoleFormatter.format(log);
 

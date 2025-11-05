@@ -1,3 +1,8 @@
+/**
+ * Convert arbitrary values into human-readable strings for logging purposes.
+ * @param message Value to normalize.
+ * @returns String representation suitable for logs.
+ */
 export function normalizeMessage(message: unknown): string {
     if (typeof message === "string") return message;
     if (message instanceof Error) return message.stack ?? `${message.name}: ${message.message}`;
@@ -15,6 +20,10 @@ export function normalizeMessage(message: unknown): string {
     return String(message);
 }
 
+/**
+ * Safely stringify objects, handling cycles, functions, and unsupported types.
+ * @returns JSON-like representation guarding against runtime errors.
+ */
 function stringifyObject(value: object): string {
     const seen = new WeakSet<object>();
     try {
@@ -33,6 +42,11 @@ function stringifyObject(value: object): string {
     }
 }
 
+/**
+ * Derive a subject string from contextual information.
+ * @param ctx Context object or explicit subject string.
+ * @returns Human-readable subject for the log entry.
+ */
 export const resolveSubject = (ctx: object | string): string => {
     if (typeof ctx === "string") return ctx;
     const name = ctx?.constructor?.name;

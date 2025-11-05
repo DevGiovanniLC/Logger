@@ -13,7 +13,6 @@
     6       Informational: informational messages
     7       Debug: debug-level messages
  */
-
 export enum Level {
     Emergency, // System unusable
     Alert,     // Immediate action required
@@ -25,10 +24,13 @@ export enum Level {
     Debug   // Debug-level message
 }
 
+/** Keys that map to high-severity logging helpers. */
 export type ErrorLevelKey = "emergency" | "alert" | "critical" | "error";
+
+/** Keys that map to informational logging helpers. */
 export type InfoLevelKey = "warn" | "notice" | "info" | "debug";
 
-
+/** Error-level helper entries paired with their severity indices. */
 export const ERROR_LEVEL_ENTRIES: ReadonlyArray<[ErrorLevelKey, Level]> = [
     ["emergency", Level.Emergency],
     ["alert", Level.Alert],
@@ -36,6 +38,7 @@ export const ERROR_LEVEL_ENTRIES: ReadonlyArray<[ErrorLevelKey, Level]> = [
     ["error", Level.Error],
 ];
 
+/** Info-level helper entries paired with their severity indices. */
 export const INFO_LEVEL_ENTRIES: ReadonlyArray<[InfoLevelKey, Level]> = [
     ["warn", Level.Warning],
     ["notice", Level.Notice],

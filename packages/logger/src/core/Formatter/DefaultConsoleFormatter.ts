@@ -3,6 +3,9 @@ import { LogFormatter } from "./LogFormatter";
 import { LevelColor } from "@utils/TextStyler";
 
 
+/**
+ * Descriptor used to build the formatted title for each severity level.
+ */
 type TitleInfo = Readonly<{
     icon: string;
     label: string;
@@ -38,17 +41,27 @@ const TITLE_SETS = {
 const DEFAULT_TITLE: TitleInfo = { icon: "", label: "LOG" };
 type LevelIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+/**
+ * Options accepted by {@link DefaultConsoleFormatter}.
+ */
 export type ConsoleFormatterParams = {
     withEmojis?: boolean;
     localeDate?: Intl.LocalesArgument;
     color?: boolean;
 };
 
+/**
+ * Formatter tailored for console transports with optional color and emoji support.
+ */
 export class DefaultConsoleFormatter implements LogFormatter {
     private readonly dateFormatter: Intl.DateTimeFormat;
     private readonly useColor: boolean;
     private readonly titles: readonly TitleInfo[];
 
+    /**
+     * Create a formatter instance.
+     * @param options Tuning parameters for emojis, localization, and color usage.
+     */
     constructor(options: ConsoleFormatterParams = {}) {
         const withEmojis = options.withEmojis ?? false;
         this.useColor = options.color ?? false;
@@ -60,6 +73,11 @@ export class DefaultConsoleFormatter implements LogFormatter {
         });
     }
 
+    /**
+     * Format a log entry into a console-friendly string.
+     * @param log Structured log to format.
+     * @returns Decorated line ready for output.
+     */
     format(log: Log): string {
         const id = `#${String(log.id).padStart(5, "0")}`;
         const title = this.titles[log.level] ?? DEFAULT_TITLE;
@@ -69,6 +87,11 @@ export class DefaultConsoleFormatter implements LogFormatter {
         return this.colorize(log.level)(message);
     }
 
+    /**
+     * Resolve the colorizer function for the requested level.
+     * @param level Severity index as stored on the log entry.
+     * @returns Function that wraps text with ANSI color sequences.
+     */
     private colorize(level: number): (text: string) => string {
         const index = (this.useColor ? level : 8) as LevelIndex;
         return LevelColor[index] ?? LevelColor[8];

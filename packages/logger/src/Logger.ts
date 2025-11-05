@@ -2,7 +2,7 @@ import { DISPATCHER_FACTORIES, DispatcherMode, LogDispatcher, normalizeDispatche
 import { ERROR_LEVEL_ENTRIES, ErrorLevelKey, INFO_LEVEL_ENTRIES, InfoLevelKey, Level } from "@models/Level.type";
 import { ContextLogger } from "@models/ContextLogger.type";
 import { Log } from "@models/Log.type";
-import { buildError, ErrorBuilder } from "@helpers/ErrorHandler";
+import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers/ErrorHandler";
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
 import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
 import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
@@ -10,6 +10,9 @@ import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMet
 
 const DEFAULT_TRANSPORTS: TransportParam = ["console"];
 
+/**
+ * Configuration options accepted by the {@link Logger} constructor.
+ */
 type LoggerOptions = Readonly<{
     minLevel?: Level;
     transports?: TransportParam;
@@ -17,6 +20,10 @@ type LoggerOptions = Readonly<{
     metrics?: MetricsOptions;
 }>;
 
+/**
+ * Primary logging facade that formats, filters, and dispatches log entries.
+ * Use {@link Logger.for} to obtain a contextual logger bound to a subject.
+ */
 export class Logger {
     private readonly dispatcher: LogDispatcher;
     private readonly hasTransport: boolean;
@@ -26,6 +33,10 @@ export class Logger {
 
     private counterID = 0;
 
+    /**
+     * Create a new {@link Logger} instance.
+     * @param options Optional customization for transports, minimum level, dispatcher mode, and metrics.
+     */
     constructor(readonly options?: LoggerOptions) {
         const minLevel = options?.minLevel ?? Level.Debug;
         const transports = TransportResolver.resolve(options?.transports ?? DEFAULT_TRANSPORTS);
@@ -49,10 +60,17 @@ export class Logger {
         this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel, this.metricsCollector);
     }
 
+    /**
+     * Snapshot of the currently collected metrics.
+     */
     get metrics(): LoggerMetrics {
         return this.snapshotMetrics();
     }
 
+    /**
+     * Create a contextual logger bound to a specific subject.
+     * @param ctx Object or string used to derive the log subject.
+     */
     for(ctx: object | string): ContextLogger {
         const subject = resolveSubject(ctx);
         return this.createContextLogger(subject);
@@ -78,9 +96,6 @@ export class Logger {
 
     /**
      * Level 1 - Alert: Immediate action required. (Critical security or system failure)
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     alert(subject: string, message: unknown): Log;
     alert(subject: string, error: Error): never;
@@ -91,9 +106,6 @@ export class Logger {
 
     /**
      * Level 2 - Critical: Critical condition. (Core component failure)
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     critical(subject: string, message: unknown): Log;
     critical(subject: string, error: Error): never;
@@ -109,9 +121,6 @@ export class Logger {
 
     /**
      * Level 3 - Error: Error condition. (Exception or failed operation)
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     error(subject: string, message: unknown): Log;
     error(subject: string, error: Error): never;
@@ -122,9 +131,6 @@ export class Logger {
 
     /**
      * Level 4 - Warning: Potential risk or degradation.
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     warn(subject: string, message: unknown): Log {
         return this.emit(Level.Warning, subject, message);
@@ -132,9 +138,6 @@ export class Logger {
 
     /**
      * Level 5 - Notice: Significant but normal event. (Configuration change, startup, shutdown)
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     notice(subject: string, message: unknown): Log {
         return this.emit(Level.Notice, subject, message);
@@ -142,9 +145,6 @@ export class Logger {
 
     /**
      * Level 6 - Informational: General informational message.
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     info(subject: string, message: unknown): Log {
         return this.emit(Level.Informational, subject, message);
@@ -152,9 +152,6 @@ export class Logger {
 
     /**
      * Level 7 - Debug: Detailed debug information. (Development diagnostics)
-     * @param subject Log subject or category.
-     * @param message Detailed event description.
-     * @returns Created log object.
      */
     debug(subject: string, message: unknown): Log {
         return this.emit(Level.Debug, subject, message);
@@ -172,6 +169,13 @@ export class Logger {
     }
 
 
+    /**
+     * Build and dispatch a log entry when transports are configured.
+     * @param level Severity associated with the message.
+     * @param subject Contextual subject used as log namespace.
+     * @param message Arbitrary payload that will be normalized into text.
+     * @returns The materialized {@link Log} entry, regardless of dispatch.
+     */
     private emit(level: Level, subject: string, message: unknown): Log {
         this.metricsCollector?.recordBuilt();
         const log = this.build(level, subject, normalizeMessage(message));
@@ -180,6 +184,10 @@ export class Logger {
         return log;
     }
 
+    /**
+     * Increment a metrics counter and notify listeners when configured.
+     * @param key Metric identifier to increment.
+     */
     private recordMetric(key: MetricsKey): void {
         if (!this.metricsState) return;
         this.metricsState[key] += 1;
@@ -187,12 +195,21 @@ export class Logger {
         if (callback) callback(this.snapshotMetrics());
     }
 
+    /**
+     * Produce an immutable snapshot of the current metrics state.
+     * @returns A read-only view with the counters collected so far.
+     */
     private snapshotMetrics(): LoggerMetrics {
         if (!this.metricsState) return ZERO_METRICS;
         const { built, dispatched, filtered, transportErrors } = this.metricsState;
         return { built, dispatched, filtered, transportErrors };
     }
 
+    /**
+     * Build an immutable contextual logger facade for a fixed subject.
+     * @param subject Subject associated with all generated logs.
+     * @returns A {@link ContextLogger} exposing level-specific helpers.
+     */
     private createContextLogger(subject: string): ContextLogger {
         const context: Record<string, unknown> = {};
 
@@ -209,6 +226,12 @@ export class Logger {
         return Object.freeze(context) as ContextLogger;
     }
 
+    /**
+     * Create a contextual error handler for a given severity level.
+     * @param level Severity to emit when handling messages or errors.
+     * @param subject Bound log subject.
+     * @returns A function matching {@link ContextLogger.emergency} signature.
+     */
     private createErrorHandler(level: Level, subject: string): ContextLogger["emergency"] {
         const handler = ((input: unknown, maybeMessage?: unknown, maybeOptions?: ErrorOptions) =>
             this.handleErrorLevel(level, subject, input, maybeMessage, maybeOptions, handler)
@@ -217,6 +240,17 @@ export class Logger {
         return handler;
     }
 
+    /**
+     * Handle dispatching of error-level logs including error normalization.
+     * @param level Severity associated with the handler.
+     * @param subject Contextual subject name.
+     * @param input Message, {@link Error}, or {@link ErrorBuilder} to process.
+     * @param message Optional supplemental message.
+     * @param opt Additional {@link ErrorOptions} forwarded to the builder.
+     * @param stackContext Optional function used as the stack trace boundary.
+     * @returns The emitted {@link Log} when no error is thrown.
+     * @throws Error When the input resolves to an {@link Error}.
+     */
     private handleErrorLevel(
         level: Level,
         subject: string,
@@ -226,54 +260,66 @@ export class Logger {
         stackContext?: Function
     ): Log | never {
         if (input instanceof Error) {
-            this.captureStack(input, stackContext);
+            captureStack(input, stackContext);
             throw input;
         }
 
-        if (Logger.isErrorBuilder(input)) {
+        if (isErrorBuilder(input)) {
             const normalizedMessage = message === undefined ? undefined : normalizeMessage(message);
             const err = buildError(subject, input, normalizedMessage, opt);
-            this.captureStack(err, stackContext);
+            captureStack(err, stackContext);
             throw err;
         }
 
         return this.emit(level, subject, input);
     }
 
-    private captureStack(error: Error, stackContext?: Function) {
-        if (!stackContext) return;
-        Error.captureStackTrace?.(error, stackContext);
-    }
-
-    private static isErrorBuilder(value: unknown): value is ErrorBuilder {
-        if (typeof value !== "function") return false;
-        const prototype = value.prototype;
-        if (!prototype) return false;
-        return prototype === Error.prototype || Error.prototype.isPrototypeOf(prototype);
-    }
 }
 
+/**
+ * Application-level singleton helper built on top of {@link Logger}.
+ * Useful for simple setups where a shared instance is sufficient.
+ */
 export class AppLogger {
     private static _instance?: ContextLogger;
     private static _logger?: Logger;
     private static _options?: LoggerOptions;
 
+    /**
+     * Obtain a contextual logger for the provided subject.
+     * When options are supplied, a dedicated {@link Logger} instance is created.
+     * @param subject String or object used to derive the subject.
+     * @param opts Optional one-off configuration.
+     * @returns A contextual logger bound to the requested subject.
+     */
     static for(subject: string | object, opts?: LoggerOptions): ContextLogger {
         if (opts) return new Logger(opts).for(subject);
         return this.ensureLogger().for(subject);
     }
 
+    /**
+     * Initialize the shared {@link Logger} instance used by the facade.
+     * @param opts Global configuration reused by {@link instance}.
+     */
     static init(opts?: LoggerOptions) {
         this._options = opts;
         this._logger = new Logger(opts);
         this._instance = this._logger.for("APP");
     }
 
+    /**
+     * Lazily create or return the shared contextual logger named "APP".
+     * @returns The contextual logger backing the static helpers.
+     */
     static get instance(): ContextLogger {
         if (this._instance) return this._instance;
         return (this._instance = this.ensureLogger().for("APP"));
     }
 
+    /**
+     * Emit or throw an emergency-level log using the shared logger.
+     * @returns The created log when no error is thrown.
+     */
     static emergency(message: unknown): Log;
     static emergency(error: Error): never;
     static emergency<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
@@ -281,6 +327,10 @@ export class AppLogger {
         return this.forwardErrorLevel("emergency", input, message, opt);
     }
 
+    /**
+     * Emit or throw an alert-level log using the shared logger.
+     * @returns The created log when no error is thrown.
+     */
     static alert(message: unknown): Log;
     static alert(error: Error): never;
     static alert<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
@@ -288,6 +338,10 @@ export class AppLogger {
         return this.forwardErrorLevel("alert", input, message, opt);
     }
 
+    /**
+     * Emit or throw a critical-level log using the shared logger.
+     * @returns The created log when no error is thrown.
+     */
     static critical(message: unknown): Log;
     static critical(error: Error): never;
     static critical<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
@@ -295,6 +349,10 @@ export class AppLogger {
         return this.forwardErrorLevel("critical", input, message, opt);
     }
 
+    /**
+     * Emit or throw an error-level log using the shared logger.
+     * @returns The created log when no error is thrown.
+     */
     static error(message: unknown): Log;
     static error(error: Error): never;
     static error<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
@@ -302,26 +360,50 @@ export class AppLogger {
         return this.forwardErrorLevel("error", input, message, opt);
     }
 
+    /**
+     * Emit a warning-level log using the shared logger.
+     * @returns The created log.
+     */
     static warn(message: unknown): Log {
         return this.forwardLevel("warn", message);
     }
 
+    /**
+     * Emit a notice-level log using the shared logger.
+     * @returns The created log.
+     */
     static notice(message: unknown): Log {
         return this.forwardLevel("notice", message);
     }
 
+    /**
+     * Emit an informational-level log using the shared logger.
+     * @returns The created log.
+     */
     static info(message: unknown): Log {
         return this.forwardLevel("info", message);
     }
 
+    /**
+     * Emit a debug-level log using the shared logger.
+     * @returns The created log.
+     */
     static debug(message: unknown): Log {
         return this.forwardLevel("debug", message);
     }
 
+    /**
+     * Expose the live metrics snapshot of the shared logger.
+     * @returns Immutable metrics collected by the shared logger.
+     */
     static get metrics(): LoggerMetrics {
         return this.ensureLogger().metrics;
     }
 
+    /**
+     * Forward error-level invocations to the contextual logger instance.
+     * @returns The log emitted by the contextual handler.
+     */
     private static forwardErrorLevel(
         key: ErrorLevelKey,
         input: unknown,
@@ -332,10 +414,19 @@ export class AppLogger {
         return (handler as any)(input, message, opt);
     }
 
+    /**
+     * Forward info-level invocations to the contextual logger instance.
+     * @returns The log emitted by the contextual handler.
+     */
     private static forwardLevel(key: InfoLevelKey, message: unknown): Log {
         return this.instance[key](message);
     }
 
+    /**
+     * Ensure the internal singleton logger is available.
+     * @throws Error when {@link init} was not invoked prior to usage.
+     * @returns Initialized {@link Logger} instance.
+     */
     private static ensureLogger(): Logger {
         if (this._logger) return this._logger;
         if (!this._options) throw new Error("AppLogger.init() requested");

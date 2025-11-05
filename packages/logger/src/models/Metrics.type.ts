@@ -1,7 +1,9 @@
 export type MetricsKey = "built" | "dispatched" | "filtered" | "transportErrors";
 
+/** Snapshot of counters collected by a logger instance. */
 export type LoggerMetrics = Readonly<Record<MetricsKey, number>>;
 
+/** Callback surface used to record individual metric updates. */
 export type MetricsCollector = {
     recordBuilt(): void;
     recordDispatched(): void;
@@ -9,11 +11,13 @@ export type MetricsCollector = {
     recordTransportError(): void;
 };
 
+/** Configuration for enabling metrics and receiving update notifications. */
 export type MetricsOptions = Readonly<{
     enabled?: boolean;
     onUpdate?: (metrics: LoggerMetrics) => void;
 }>;
 
+/** Zero-initialized metrics constant reused to avoid allocations. */
 export const ZERO_METRICS: LoggerMetrics = Object.freeze({
     built: 0,
     dispatched: 0,
@@ -21,4 +25,5 @@ export const ZERO_METRICS: LoggerMetrics = Object.freeze({
     transportErrors: 0,
 });
 
+/** Mutable backing store used internally before exposing read-only snapshots. */
 export type MutableMetrics = Record<MetricsKey, number>;

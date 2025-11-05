@@ -1,8 +1,15 @@
+/** Function capable of decorating text with ANSI escape sequences. */
 type ColorFn = (text: string) => string;
 type LevelIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+/**
+ * Create a color function based on a single ANSI code.
+ */
 const wrap = (code: number): ColorFn => (text: string) => `\x1b[${code}m${text}\x1b[0m`;
 
+/**
+ * Collection of ANSI styling helpers keyed by descriptive names.
+ */
 export const color = {
     // Colors
     black: wrap(30),
@@ -31,6 +38,7 @@ export const color = {
     inverse: wrap(7),
 } as const;
 
+/** No-op color function used as a fallback. */
 const identity: ColorFn = (text) => text;
 
 const levelColorMap: Record<LevelIndex, ColorFn> = {
@@ -45,6 +53,9 @@ const levelColorMap: Record<LevelIndex, ColorFn> = {
     8: identity,
 };
 
+/**
+ * Map that exposes both numeric level indices and descriptive keys.
+ */
 type LevelColorMap = Record<LevelIndex, ColorFn> & {
     emergency: ColorFn;
     alert: ColorFn;
@@ -68,4 +79,7 @@ const levelColorObject: LevelColorMap = {
     debug: levelColorMap[7],
 };
 
+/**
+ * Frozen map that relates log levels to friendly colorizers.
+ */
 export const LevelColor: LevelColorMap = Object.freeze(levelColorObject) as LevelColorMap;
