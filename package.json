@@ -9,12 +9,14 @@
         "build": "npm -w @giodev/logger run build",
         "clean": "rimraf packages/**/dist",
         "start": "npm -w playground run start",
-        "update": "npm run pack && npm -w playground run update"
+        "update": "npm run pack && npm -w playground run update",
+        "test": "npm -w @giodev/logger run test"
     },
     "devDependencies": {
         "@types/node": "^24.9.2",
         "rimraf": "^6.0.0",
         "tsup": "^8.5.0",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.7"
     }
 }

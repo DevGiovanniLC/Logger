@@ -2,9 +2,14 @@
     "compilerOptions": {
         "target": "ES2022",
         "module": "ESNext",
+        "moduleResolution": "bundler",
         "declaration": true,
         "skipLibCheck": true,
         "baseUrl": "./src",
+        "types": [
+            "node",
+            "vitest"
+        ],
         "paths": {
             "@core/*": [
                 "core/*"
@@ -17,7 +22,7 @@
             ],
             "@helpers/*": [
                 "helpers/*"
-            ],
+            ]
         }
     }
 }

@@ -15,7 +15,8 @@
     },
     "scripts": {
         "build": "tsup",
-        "clean": "rimraf dist"
+        "clean": "rimraf dist",
+        "test": "vitest"
     },
     "files": [
         "dist"
