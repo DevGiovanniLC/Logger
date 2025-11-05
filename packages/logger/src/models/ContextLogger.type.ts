@@ -1,4 +1,5 @@
 import { ErrorBuilder } from "@helpers/ErrorHandler";
+import { LoggerMetrics } from "./Metrics.type";
 import { Log } from "./Log.type";
 
 
@@ -18,4 +19,5 @@ export type ContextLogger = Readonly<{
     notice: LevelFn;
     info: LevelFn;
     debug: LevelFn;
+    metrics: () => LoggerMetrics;
 }>;

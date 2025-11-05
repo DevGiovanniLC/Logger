@@ -4,32 +4,27 @@ import { ContextLogger } from "@models/ContextLogger.type";
 import { Log } from "@models/Log.type";
 import { buildError, ErrorBuilder } from "@helpers/ErrorHandler";
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
-import { normalizeMessage } from "@utils/MessageNormalizer";
-
+import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
+import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
 
 
 const DEFAULT_TRANSPORTS: TransportParam = ["console"];
 
-const resolveSubject = (ctx: object | string): string => {
-    if (typeof ctx === "string") return ctx;
-    const name = ctx?.constructor?.name;
-    return typeof name === "string" && name.length > 0 ? name : "Unknown";
-};
-
-export type LoggerOptions = Readonly<{
+type LoggerOptions = Readonly<{
     minLevel?: Level;
     transports?: TransportParam;
     dispatcher?: DispatcherMode;
+    metrics?: MetricsOptions;
 }>;
-
 
 export class Logger {
     private readonly dispatcher: LogDispatcher;
     private readonly hasTransport: boolean;
-
+    private readonly metricsOptions?: MetricsOptions;
+    private readonly metricsState?: MutableMetrics;
+    private readonly metricsCollector?: MetricsCollector;
 
     private counterID = 0;
-
 
     constructor(readonly options?: LoggerOptions) {
         const minLevel = options?.minLevel ?? Level.Debug;
@@ -37,10 +32,26 @@ export class Logger {
 
         this.hasTransport = transports.length > 0;
 
+        const metricsOptions = options?.metrics;
+        const metricsEnabled = metricsOptions?.enabled ?? !!metricsOptions?.onUpdate;
+        if (metricsEnabled) {
+            this.metricsOptions = metricsOptions;
+            this.metricsState = { built: 0, dispatched: 0, filtered: 0, transportErrors: 0 };
+            this.metricsCollector = {
+                recordBuilt: () => this.recordMetric("built"),
+                recordDispatched: () => this.recordMetric("dispatched"),
+                recordFiltered: () => this.recordMetric("filtered"),
+                recordTransportError: () => this.recordMetric("transportErrors"),
+            };
+        }
+
         const dispatcherKey = normalizeDispatcher(options?.dispatcher);
-        this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel);
+        this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel, this.metricsCollector);
     }
 
+    get metrics(): LoggerMetrics {
+        return this.snapshotMetrics();
+    }
 
     for(ctx: object | string): ContextLogger {
         const subject = resolveSubject(ctx);
@@ -162,10 +173,24 @@ export class Logger {
 
 
     private emit(level: Level, subject: string, message: unknown): Log {
+        this.metricsCollector?.recordBuilt();
         const log = this.build(level, subject, normalizeMessage(message));
         if (!this.hasTransport) return log;
         this.dispatcher.dispatch(log);
         return log;
+    }
+
+    private recordMetric(key: MetricsKey): void {
+        if (!this.metricsState) return;
+        this.metricsState[key] += 1;
+        const callback = this.metricsOptions?.onUpdate;
+        if (callback) callback(this.snapshotMetrics());
+    }
+
+    private snapshotMetrics(): LoggerMetrics {
+        if (!this.metricsState) return ZERO_METRICS;
+        const { built, dispatched, filtered, transportErrors } = this.metricsState;
+        return { built, dispatched, filtered, transportErrors };
     }
 
     private createContextLogger(subject: string): ContextLogger {
@@ -179,6 +204,8 @@ export class Logger {
             context[name] = (message: unknown) => this.emit(level, subject, message);
         }
 
+        context.metrics = () => this.metrics;
+
         return Object.freeze(context) as ContextLogger;
     }
 
@@ -190,7 +217,7 @@ export class Logger {
         return handler;
     }
 
-    private handleErrorLevel<E extends Error>(
+    private handleErrorLevel(
         level: Level,
         subject: string,
         input: unknown,
@@ -289,6 +316,10 @@ export class AppLogger {
 
     static debug(message: unknown): Log {
         return this.forwardLevel("debug", message);
+    }
+
+    static get metrics(): LoggerMetrics {
+        return this.ensureLogger().metrics;
     }
 
     private static forwardErrorLevel(

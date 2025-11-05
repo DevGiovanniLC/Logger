@@ -2,6 +2,7 @@ import { Log } from "@models/Log.type";
 import { LogDispatcher } from "./LogDispatcher";
 import { Level } from "@models/Level.type";
 import { LogTransport } from "@core/Transport/LogTransport";
+import { MetricsCollector } from "@models/Metrics.type";
 
 const isNode = typeof process !== "undefined" && !!process.versions?.node;
 
@@ -138,7 +139,12 @@ export class ReactiveDispatcher implements LogDispatcher {
      * @param minLevel    Minimum level to emit. A log is emitted when `log.level <= minLevel`.
      * @param opts        Optional behavior configuration. See {@link Opts}.
      */
-    constructor(transports: LogTransport[], minLevel: Level = Level.Debug, opts?: Opts) {
+    constructor(
+        transports: LogTransport[],
+        minLevel: Level = Level.Debug,
+        opts?: Opts,
+        private readonly metrics?: MetricsCollector
+    ) {
         this.transports = transports.slice();
         this.minLevel = minLevel;
         this.flushInterval = opts?.intervalMs ?? 50;
@@ -166,7 +172,11 @@ export class ReactiveDispatcher implements LogDispatcher {
      * @param log The log record to enqueue.
      */
     dispatch(log: Log): void {
-        if (this.disposed || this.transports.length === 0 || log.level > this.minLevel) return;
+        if (this.disposed || this.transports.length === 0) return;
+        if (log.level > this.minLevel) {
+            this.metrics?.recordFiltered();
+            return;
+        }
         this.buffer.push(log);
         this.schedule();
         this.resetIdleTimer();
@@ -193,14 +203,22 @@ export class ReactiveDispatcher implements LogDispatcher {
         const batch = this.buffer.splice(0);
 
         for (const log of batch) {
-            if (log.level > this.minLevel) continue;
+            if (log.level > this.minLevel) {
+                this.metrics?.recordFiltered();
+                continue;
+            }
 
             for (const transport of this.transports) {
                 try {
                     transport.log(log);
                 } catch {
                     // Swallow transport errors to avoid blocking subsequent logs.
+                    this.metrics?.recordTransportError();
                 }
+            }
+
+            if (this.transports.length > 0) {
+                this.metrics?.recordDispatched();
             }
         }
 

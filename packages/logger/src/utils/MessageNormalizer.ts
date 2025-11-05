@@ -32,3 +32,9 @@ function stringifyObject(value: object): string {
         return Object.prototype.toString.call(value);
     }
 }
+
+export const resolveSubject = (ctx: object | string): string => {
+    if (typeof ctx === "string") return ctx;
+    const name = ctx?.constructor?.name;
+    return typeof name === "string" && name.length > 0 ? name : "Unknown";
+};
