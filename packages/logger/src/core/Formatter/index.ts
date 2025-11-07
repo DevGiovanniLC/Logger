@@ -1,2 +1,2 @@
 export { LogFormatter } from '@core/Formatter/LogFormatter'
-export { DefaultConsoleFormatter } from '@core/Formatter/DefaultConsoleFormatter'
+export { DefaultFormatter as DefaultConsoleFormatter } from '@core/Formatter/DefaultFormatter'

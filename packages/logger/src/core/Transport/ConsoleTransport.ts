@@ -1,4 +1,4 @@
-import { ConsoleFormatterParams, DefaultConsoleFormatter } from "@core/Formatter/DefaultConsoleFormatter"
+import { FormatterParams, DefaultFormatter } from "@core/Formatter/DefaultFormatter"
 import { LogFormatter } from "@core/Formatter/LogFormatter"
 import { LogTransport } from "./LogTransport"
 import { Log } from "@models/Log.type"
@@ -10,7 +10,7 @@ import { Level } from "@models/Level.type"
  */
 type ConsoleTransportParams = {
     formatter?: LogFormatter
-    defaultFormaterOptions?: ConsoleFormatterParams
+    defaultFormaterOptions?: FormatterParams
 }
 
 /**
@@ -26,7 +26,7 @@ export class ConsoleTransport extends LogTransport {
     constructor(consoleTransportOptions?: ConsoleTransportParams
     ) {
         super("console");
-        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions)
+        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultFormatter(consoleTransportOptions?.defaultFormaterOptions)
     }
 
     /**

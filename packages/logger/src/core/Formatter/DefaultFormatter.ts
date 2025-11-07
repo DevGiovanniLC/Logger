@@ -42,9 +42,9 @@ const DEFAULT_TITLE: TitleInfo = { icon: "", label: "LOG" };
 type LevelIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 /**
- * Options accepted by {@link DefaultConsoleFormatter}.
+ * Options accepted by {@link DefaultFormatter}.
  */
-export type ConsoleFormatterParams = {
+export type FormatterParams = {
     withEmojis?: boolean;
     localeDate?: Intl.LocalesArgument;
     color?: boolean;
@@ -53,7 +53,7 @@ export type ConsoleFormatterParams = {
 /**
  * Formatter tailored for console transports with optional color and emoji support.
  */
-export class DefaultConsoleFormatter implements LogFormatter {
+export class DefaultFormatter implements LogFormatter {
     private readonly dateFormatter: Intl.DateTimeFormat;
     private readonly useColor: boolean;
     private readonly titles: readonly TitleInfo[];
@@ -62,7 +62,7 @@ export class DefaultConsoleFormatter implements LogFormatter {
      * Create a formatter instance.
      * @param options Tuning parameters for emojis, localization, and color usage.
      */
-    constructor(options: ConsoleFormatterParams = {}) {
+    constructor(options: FormatterParams = {}) {
         const withEmojis = options.withEmojis ?? false;
         this.useColor = options.color ?? false;
         const key: keyof typeof TITLE_SETS = withEmojis ? "true" : "false";
