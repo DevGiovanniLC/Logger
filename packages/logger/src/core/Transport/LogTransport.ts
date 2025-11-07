@@ -2,13 +2,63 @@ import { Log } from "@models/Log.type";
 
 /**
  * Transport abstraction that delivers formatted logs to an output.
+ *
+ * Provides lifecycle helpers (enable/disable) and a template method (`emit`)
+ * so subclasses only focus on the actual delivery implementation.
  */
-export interface LogTransport {
+export abstract class LogTransport {
+    private enabled: boolean;
+
     /**
-     * Persist or display the provided log entry.
-     * @param log Structured log payload.
+     * @param name Identifier used for debugging/metrics.
+     * @param enabled Initial enabled state.
      */
-    log(log: Log): void;
+    protected constructor(private readonly name: string = "log-transport", enabled = true) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * Public entry point used by dispatchers.
+     * Performs guards before delegating to the concrete transport.
+     */
+    public emit(log: Log): void {
+        if (!this.enabled) return;
+        if (!this.shouldEmit(log)) return;
+        this.performEmit(log);
+    }
+
+    /**
+     * Turn on the transport without reinstantiation.
+     */
+    public enable(): void {
+        this.enabled = true;
+    }
+
+    /**
+     * Temporarily disable the transport.
+     */
+    public disable(): void {
+        this.enabled = false;
+    }
+
+    /**
+     * Expose the transport identifier for diagnostics.
+     */
+    public get transportName(): string {
+        return this.name;
+    }
+
+    /**
+     * Hook that allows subclasses to skip emitting certain logs.
+     */
+    protected shouldEmit(_log: Log): boolean {
+        return true;
+    }
+
+    /**
+     * Concrete transports must implement the delivery mechanics.
+     */
+    protected abstract performEmit(log: Log): void;
 }
 
 /**

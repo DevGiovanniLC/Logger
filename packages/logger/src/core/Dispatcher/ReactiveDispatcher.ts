@@ -59,7 +59,7 @@ export type Opts = {
  * ### Level filtering
  * - A log is emitted only if its `level <= minLevel`. Adjust if your enum uses a different ordering.
  */
-export class ReactiveDispatcher implements LogDispatcher {
+export class ReactiveDispatcher extends LogDispatcher {
     /**
      * In-memory buffer of pending log records.
      * Emptied on each {@link flush}.
@@ -98,16 +98,6 @@ export class ReactiveDispatcher implements LogDispatcher {
     private readonly schedule: () => void;
 
     /**
-     * Destination transports that will receive emitted logs.
-     */
-    private readonly transports: readonly LogTransport[];
-
-    /**
-     * Minimum level to emit. A log is emitted when `log.level <= minLevel`.
-     */
-    private readonly minLevel: Level;
-
-    /**
      * Handle for the scheduled flush timer (when using `setTimeout`).
      */
     private timer?: ReturnType<typeof setTimeout>;
@@ -143,10 +133,9 @@ export class ReactiveDispatcher implements LogDispatcher {
         transports: LogTransport[],
         minLevel: Level = Level.Debug,
         opts?: Opts,
-        private readonly metrics?: MetricsCollector
+        metrics?: MetricsCollector
     ) {
-        this.transports = transports.slice();
-        this.minLevel = minLevel;
+        super(transports, minLevel, metrics);
         this.flushInterval = opts?.intervalMs ?? 50;
         this.idleTimeout = opts?.idleMs ?? 5000;
         this.unrefTimers = opts?.unrefTimers ?? true;
@@ -203,23 +192,7 @@ export class ReactiveDispatcher implements LogDispatcher {
         const batch = this.buffer.splice(0);
 
         for (const log of batch) {
-            if (log.level > this.minLevel) {
-                this.metrics?.recordFiltered();
-                continue;
-            }
-
-            for (const transport of this.transports) {
-                try {
-                    transport.log(log);
-                } catch {
-                    // Swallow transport errors to avoid blocking subsequent logs.
-                    this.metrics?.recordTransportError();
-                }
-            }
-
-            if (this.transports.length > 0) {
-                this.metrics?.recordDispatched();
-            }
+            this.emitToTransports(log);
         }
 
         this.resetIdleTimer();

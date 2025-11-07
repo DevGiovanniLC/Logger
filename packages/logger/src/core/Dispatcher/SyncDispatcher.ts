@@ -15,9 +15,7 @@ import { MetricsCollector } from "@models/Metrics.type";
  * reliability and deterministic order are preferred
  * over non-blocking performance.
  */
-export class SyncDispatcher implements LogDispatcher {
-    private readonly transports: readonly LogTransport[];
-
+export class SyncDispatcher extends LogDispatcher {
     /**
      * Creates a new synchronous dispatcher.
      * @param transports Array of active transports that will receive log events.
@@ -26,10 +24,10 @@ export class SyncDispatcher implements LogDispatcher {
      */
     constructor(
         transports: LogTransport[],
-        private readonly minLevel: Level = Level.Debug,
-        private readonly metrics?: MetricsCollector
+        minLevel: Level = Level.Debug,
+        metrics?: MetricsCollector
     ) {
-        this.transports = transports.slice();
+        super(transports, minLevel, metrics);
     }
 
     /**
@@ -39,25 +37,7 @@ export class SyncDispatcher implements LogDispatcher {
      * @param log The log object to process.
      */
     dispatch(log: Log): void {
-        if (log.level > this.minLevel) {
-            this.metrics?.recordFiltered();
-            return;
-        }
-
-        if (this.transports.length === 0) return;
-
-        let encounteredError = false;
-
-        for (const transport of this.transports) {
-            try {
-                transport.log(log);
-            } catch {
-                encounteredError = true;
-                this.metrics?.recordTransportError();
-            }
-        }
-
-        this.metrics?.recordDispatched();
+        const encounteredError = this.emitToTransports(log);
 
         if (encounteredError) {
             // keep compatibility: transport errors already swallowed

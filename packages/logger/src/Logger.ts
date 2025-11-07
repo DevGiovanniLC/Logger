@@ -1,4 +1,5 @@
-import { DISPATCHER_FACTORIES, DispatcherMode, LogDispatcher, normalizeDispatcher } from "@core/Dispatcher/LogDispatcher";
+import { LogDispatcher } from "@core/Dispatcher/LogDispatcher";
+import { DISPATCHER_FACTORIES, DispatcherMode, normalizeDispatcher } from "@core/Dispatcher/DispatcherRegistry";
 import { ERROR_LEVEL_ENTRIES, ErrorLevelKey, INFO_LEVEL_ENTRIES, InfoLevelKey, Level } from "@models/Level.type";
 import { ContextLogger } from "@models/ContextLogger.type";
 import { Log } from "@models/Log.type";

@@ -16,7 +16,7 @@ type ConsoleTransportParams = {
 /**
  * Transport that writes formatted logs to the host console.
  */
-export class ConsoleTransport implements LogTransport {
+export class ConsoleTransport extends LogTransport {
     private readonly ConsoleFormatter: LogFormatter
 
     /**
@@ -25,6 +25,7 @@ export class ConsoleTransport implements LogTransport {
      */
     constructor(consoleTransportOptions?: ConsoleTransportParams
     ) {
+        super("console");
         this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultConsoleFormatter(consoleTransportOptions?.defaultFormaterOptions)
     }
 
@@ -32,7 +33,7 @@ export class ConsoleTransport implements LogTransport {
      * Output the provided log through the appropriate console channel.
      * @param log Structured log entry to write.
      */
-    log(log: Log): void {
+    protected performEmit(log: Log): void {
         const text = this.ConsoleFormatter.format(log);
 
         switch (log.level) {

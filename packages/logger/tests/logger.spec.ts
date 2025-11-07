@@ -6,11 +6,19 @@ import { AppLogger, Logger } from "../src/Logger";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 
-class MemoryTransport implements LogTransport {
+class MemoryTransport extends LogTransport {
     public readonly logs: Log[] = [];
-    log = vi.fn((log: Log) => {
+    public readonly emitSpy = vi.fn((log: Log) => {
         this.logs.push(log);
     });
+
+    constructor() {
+        super("memory");
+    }
+
+    protected performEmit(log: Log): void {
+        this.emitSpy(log);
+    }
 }
 
 describe("Logger", () => {
@@ -28,7 +36,7 @@ describe("Logger", () => {
 
         const log = logger.warn("Auth", { userId: 42 });
 
-        expect(transport.log).toHaveBeenCalledTimes(1);
+        expect(transport.emitSpy).toHaveBeenCalledTimes(1);
         expect(transport.logs[0]).toMatchObject({
             level: Level.Warning,
             subject: "Auth",
@@ -53,7 +61,7 @@ describe("Logger", () => {
         const result = context.info("processed");
 
         expect(result.subject).toBe("PaymentsService");
-        expect(transport.log).toHaveBeenCalledWith(
+        expect(transport.emitSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 subject: "PaymentsService",
                 message: "processed",
@@ -105,7 +113,7 @@ describe("AppLogger", () => {
         const log = AppLogger.notice("Loaded configuration");
 
         expect(log.subject).toBe("APP");
-        expect(transport.log).toHaveBeenCalledWith(
+        expect(transport.emitSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 subject: "APP",
                 message: "Loaded configuration",
