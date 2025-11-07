@@ -27,10 +27,10 @@ export abstract class LogTransport {
      */
     protected constructor(
         private readonly name: string = "log-transport",
-        formatterParams: TransportParams,
+        formatterParams?: TransportParams,
         private enabled = true
     ) {
-        this.formatter = formatterParams.formatter ?? new DefaultFormatter(formatterParams?.defaultFormaterOptions)
+        this.formatter = formatterParams?.formatter ?? new DefaultFormatter(formatterParams?.defaultFormaterOptions)
     }
 
     /**
