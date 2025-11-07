@@ -11,6 +11,16 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs",
             "require": "./dist/index.cjs"
+        },
+        "./Transport": {
+            "types": "./dist/Transport/index.d.ts",
+            "import": "./dist/Transport/index.mjs",
+            "require": "./dist/Transport/index.cjs"
+        },
+        "./Formatter": {
+            "types": "./dist/Formatter/index.d.ts",
+            "import": "./dist/Formatter/index.mjs",
+            "require": "./dist/Formatter/index.cjs"
         }
     },
     "scripts": {
