@@ -1,32 +1,21 @@
-import { FormatterParams, DefaultFormatter } from "@core/Formatter/DefaultFormatter"
-import { LogFormatter } from "@core/Formatter/LogFormatter"
-import { LogTransport } from "./LogTransport"
+import { LogTransport, TransportParams } from "./LogTransport"
 import { Log } from "@models/Log.type"
 import { Level } from "@models/Level.type"
 
 
-/**
- * Configuration for {@link ConsoleTransport}.
- */
-type ConsoleTransportParams = {
-    formatter?: LogFormatter
-    defaultFormaterOptions?: FormatterParams
-}
 
 /**
  * Transport that writes formatted logs to the host console.
  */
 export class ConsoleTransport extends LogTransport {
-    private readonly ConsoleFormatter: LogFormatter
 
     /**
      * Create a console transport.
      * @param consoleTransportOptions Optional custom formatter or formatter options.
      */
-    constructor(consoleTransportOptions?: ConsoleTransportParams
+    constructor(consoleTransportOptions?: TransportParams
     ) {
-        super("console");
-        this.ConsoleFormatter = consoleTransportOptions?.formatter ?? new DefaultFormatter(consoleTransportOptions?.defaultFormaterOptions)
+        super("console", consoleTransportOptions);
     }
 
     /**
@@ -34,7 +23,7 @@ export class ConsoleTransport extends LogTransport {
      * @param log Structured log entry to write.
      */
     protected performEmit(log: Log): void {
-        const text = this.ConsoleFormatter.format(log);
+        const text = this.formatter.format(log);
 
         switch (log.level) {
             case Level.Emergency:

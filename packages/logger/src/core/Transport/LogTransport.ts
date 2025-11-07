@@ -1,4 +1,15 @@
+import { LogFormatter } from "@core/Formatter";
+import { DefaultFormatter, FormatterParams } from "@core/Formatter/DefaultFormatter";
 import { Log } from "@models/Log.type";
+
+/**
+ * Configuration for {@link LogTransport}.
+ */
+export type TransportParams = {
+    formatter?: LogFormatter
+    defaultFormaterOptions?: FormatterParams
+}
+
 
 /**
  * Transport abstraction that delivers formatted logs to an output.
@@ -7,14 +18,19 @@ import { Log } from "@models/Log.type";
  * so subclasses only focus on the actual delivery implementation.
  */
 export abstract class LogTransport {
-    private enabled: boolean;
+
+    protected readonly formatter: LogFormatter
 
     /**
      * @param name Identifier used for debugging/metrics.
      * @param enabled Initial enabled state.
      */
-    protected constructor(private readonly name: string = "log-transport", enabled = true) {
-        this.enabled = enabled;
+    protected constructor(
+        private readonly name: string = "log-transport",
+        formatterParams: TransportParams,
+        private enabled = true
+    ) {
+        this.formatter = formatterParams.formatter ?? new DefaultFormatter(formatterParams?.defaultFormaterOptions)
     }
 
     /**
