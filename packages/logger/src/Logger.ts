@@ -19,7 +19,7 @@ type LoggerOptions = Readonly<{
     minLevel?: Level;
     transports?: TransportParam;
     dispatcher?: DispatcherMode;
-    metrics?: MetricsOptions;
+    metrics?: MetricsOptions | boolean;
 }>;
 
 /**
@@ -29,7 +29,8 @@ type LoggerOptions = Readonly<{
 export class Logger {
     private readonly dispatcher: LogDispatcher;
     private readonly hasTransport: boolean;
-    private readonly metricsOptions?: MetricsOptions;
+    private readonly isMetricsEnabled: boolean
+    private readonly callback: Function
     private readonly metricsState?: MutableMetrics;
     private readonly metricsCollector?: MetricsCollector;
 
@@ -46,17 +47,18 @@ export class Logger {
         this.hasTransport = transports.length > 0;
 
         const metricsOptions = options?.metrics;
-        const metricsEnabled = metricsOptions?.enabled ?? !!metricsOptions?.onUpdate;
-        if (metricsEnabled) {
-            this.metricsOptions = metricsOptions;
-            this.metricsState = { built: 0, dispatched: 0, filtered: 0, transportErrors: 0 };
-            this.metricsCollector = {
-                recordBuilt: () => this.recordMetric("built"),
-                recordDispatched: () => this.recordMetric("dispatched"),
-                recordFiltered: () => this.recordMetric("filtered"),
-                recordTransportError: () => this.recordMetric("transportErrors"),
-            };
-        }
+
+        this.isMetricsEnabled = (typeof metricsOptions !== "boolean" && metricsOptions?.enabled || typeof metricsOptions === "boolean" && metricsOptions)
+        this.callback = typeof metricsOptions !== "boolean" ? metricsOptions?.onUpdate : undefined
+
+        this.metricsState = { built: 0, dispatched: 0, filtered: 0, transportErrors: 0 };
+        this.metricsCollector = {
+            recordBuilt: () => this.recordMetric("built"),
+            recordDispatched: () => this.recordMetric("dispatched"),
+            recordFiltered: () => this.recordMetric("filtered"),
+            recordTransportError: () => this.recordMetric("transportErrors"),
+        };
+
 
         const dispatcherKey = normalizeDispatcher(options?.dispatcher);
         this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel, this.metricsCollector);
@@ -66,7 +68,7 @@ export class Logger {
      * Snapshot of the currently collected metrics.
      */
     get metrics(): LoggerMetrics {
-        if (this.metricsOptions?.enabled) {
+        if (this.isMetricsEnabled) {
             return this.snapshotMetrics();
         }
         requireMetrics(this)
@@ -196,7 +198,7 @@ export class Logger {
     private recordMetric(key: MetricsKey): void {
         if (!this.metricsState) return;
         this.metricsState[key] += 1;
-        const callback = this.metricsOptions?.onUpdate;
+        const callback = this.callback
         if (callback) callback(this.snapshotMetrics());
     }
 
