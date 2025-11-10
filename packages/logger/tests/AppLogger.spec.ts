@@ -76,6 +76,33 @@ describe("AppLogger", () => {
             );
         });
 
+        it("should derive contextual subjects from object instances when using AppLogger.for", () => {
+            class AnalyticsEngine { }
+
+            const scoped = AppLogger.for(new AnalyticsEngine());
+            const log = scoped.info("event");
+
+            expect(log.subject).toBe("AnalyticsEngine");
+            expect(emitSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    subject: "AnalyticsEngine",
+                    level: Level.Informational,
+                })
+            );
+        });
+
+        it("should emit emergency logs when invoked with plain messages", () => {
+            const log = AppLogger.emergency("panic");
+
+            expect(log.level).toBe(Level.Emergency);
+            expect(log.message).toContain("panic");
+            expect(emitSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    level: Level.Emergency,
+                })
+            );
+        });
+
         it("should create dedicated contextual loggers when per-call options are provided", () => {
             const dedicatedTransport = new MemoryTransport();
             const dedicatedEmit = vi.spyOn(dedicatedTransport, "emit");
@@ -123,6 +150,21 @@ describe("AppLogger", () => {
             expect(metrics.transportErrors).toBeGreaterThanOrEqual(1);
             expect(metrics.dispatched).toBeGreaterThanOrEqual(1);
         });
+
+        it("should honor configured minLevel thresholds when static helpers are used", () => {
+            const strictTransport = new MemoryTransport();
+            const strictEmit = vi.spyOn(strictTransport, "emit");
+            AppLogger.init({
+                transports: [strictTransport],
+                minLevel: Level.Error,
+                metrics: { enabled: true },
+            });
+
+            AppLogger.info("should be filtered");
+
+            expect(strictEmit).not.toHaveBeenCalled();
+            expect(AppLogger.metrics.filtered).toBeGreaterThanOrEqual(1);
+        });
     });
 
     describe("without initialization", () => {
@@ -138,6 +180,11 @@ describe("AppLogger", () => {
         it("should throw when metrics are accessed before init", () => {
 
             expect(() => AppLogger.metrics).toThrow("AppLogger.init() requested");
+        });
+
+        it("should throw when the instance getter is accessed before init", () => {
+
+            expect(() => AppLogger.instance).toThrow("AppLogger.init() requested");
         });
     });
 
@@ -157,6 +204,31 @@ describe("AppLogger", () => {
 
             expect(firstEmit).toHaveBeenCalledTimes(1);
             expect(secondEmit).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe("after reset", () => {
+        it("should require reinitialization before using helpers again", () => {
+            AppLogger.init({ transports: [], metrics: { enabled: true } });
+
+            AppLogger.reset();
+
+            expect(() => AppLogger.warn("orphan log")).toThrow("AppLogger.init() requested");
+        });
+
+        it("should allow initializing fresh transports after a reset", () => {
+            const initialTransport = new MemoryTransport();
+            AppLogger.init({ transports: [initialTransport], metrics: { enabled: true } });
+
+            AppLogger.reset();
+
+            const nextTransport = new MemoryTransport();
+            const nextEmit = vi.spyOn(nextTransport, "emit");
+
+            AppLogger.init({ transports: [nextTransport], metrics: { enabled: true } });
+            AppLogger.notice("restored");
+
+            expect(nextEmit).toHaveBeenCalledTimes(1);
         });
     });
 
