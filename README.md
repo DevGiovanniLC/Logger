@@ -1,4 +1,6 @@
-# giodev/logger
+# @giodev/logger
+<img width="605" height="177" alt="image" src="https://github.com/user-attachments/assets/d33cef0d-51e2-491b-aa17-5d5d848cdea8" />
+<img width="604" height="185" alt="image" src="https://github.com/user-attachments/assets/33be268f-ecdc-492a-8fca-06998b1115e6" />
 
 ## English
 
