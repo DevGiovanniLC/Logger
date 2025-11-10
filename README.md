@@ -15,6 +15,7 @@
 - `DefaultFormatter` with emoji/ASCII headers, ANSI colors, and localized timestamps.
 - Metrics (`built`, `dispatched`, `filtered`, `transportErrors`) with a live callback.
 - Utilities to normalize messages, build and throw errors, and style text.
+- `AppLogger.reset()` to clear singleton state between tests or runtime reconfiguration.
 
 ### Repository Structure
 - `packages/logger`: source code, tests, and package build.
@@ -53,6 +54,11 @@ import { AppLogger } from '@giodev/logger'
 AppLogger.init({ transports: ['console'], metrics: { enabled: true } })
 AppLogger.warn('Warming up cache')
 console.log(AppLogger.metrics)
+
+// Useful for tests to avoid singleton leakage
+afterEach(() => {
+  AppLogger.reset()
+})
 ```
 
 ### Dispatchers & Transports
@@ -82,8 +88,10 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - `filtered`: discarded because of `minLevel`.
 - `transportErrors`: failures while emitting through transports.
 
+`onUpdate` fires every time one of those counters increases (typically twice per log: once for `built`, once for the final outcome), so plan your observers with that cadence in mind.
+
 ### Testing & Quality
-- `npm run test` runs Vitest (`packages/logger/tests/logger.spec.ts`).
+- `npm run test` runs Vitest (`packages/logger/tests/*`).
 - `ReactiveDispatcher` exposes `drain()` to ensure deterministic results.
 - Add new tests under `packages/logger/tests`.
 
@@ -111,6 +119,7 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - `DefaultFormatter` con headers emoji/ASCII, colores ANSI y timestamps localizados.
 - Metricas (`built`, `dispatched`, `filtered`, `transportErrors`) con callback en vivo.
 - Utilidades para normalizar mensajes, construir y lanzar errores y estilizar texto.
+- `AppLogger.reset()` para limpiar el estado singleton entre pruebas o reconfiguraciones.
 
 ### Estructura del Repositorio
 - `packages/logger`: codigo fuente, pruebas y build del paquete.
@@ -149,6 +158,11 @@ import { AppLogger } from '@giodev/logger'
 AppLogger.init({ transports: ['console'], metrics: { enabled: true } })
 AppLogger.warn('Calentando caché')
 console.log(AppLogger.metrics)
+
+// En pruebas
+afterEach(() => {
+  AppLogger.reset()
+})
 ```
 
 ### Dispatchers y Transportes
@@ -178,8 +192,10 @@ Activa con `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Contador
 - `filtered`: descartados por `minLevel`.
 - `transportErrors`: fallos al emitir en transportes.
 
+`onUpdate` se ejecuta cada vez que incrementa un contador (normalmente dos veces por log: `built` + resultado), así que toma en cuenta ese ritmo para tus consumidores.
+
 ### Pruebas y Calidad
-- `npm run test` corre Vitest (`packages/logger/tests/logger.spec.ts`).
+- `npm run test` corre Vitest (`packages/logger/tests/*`).
 - `ReactiveDispatcher` expone `drain()` para asegurar resultados deterministas.
 - Agrega nuevas pruebas bajo `packages/logger/tests`.
 
