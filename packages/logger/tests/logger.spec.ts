@@ -239,14 +239,35 @@ describe("Logger", () => {
 
             const log = logger.info("Normalizer", undefined);
 
-            expect(log.message).toBe("undefined");
-            expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ message: "undefined" }));
+        expect(log.message).toBe("undefined");
+        expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ message: "undefined" }));
+    });
+
+    it("should invoke metrics onUpdate for every counter increment", () => {
+        const transport = new MemoryTransport();
+        const onUpdate = vi.fn();
+        const logger = new Logger({
+            transports: [transport],
+            metrics: { enabled: true, onUpdate },
         });
 
-        it("should throw contextual custom errors built from contextual helpers", () => {
-            class ContextualError extends Error { }
-            const logger = new Logger({ transports: [] });
-            const context = logger.for("Contextual");
+        logger.info("OnUpdate", "payload");
+
+        expect(onUpdate).toHaveBeenCalledTimes(2);
+        expect(onUpdate.mock.calls[0][0]).toMatchObject({
+            built: 1,
+            dispatched: 0,
+        });
+        expect(onUpdate.mock.calls[1][0]).toMatchObject({
+            built: 1,
+            dispatched: 1,
+        });
+    });
+
+    it("should throw contextual custom errors built from contextual helpers", () => {
+        class ContextualError extends Error { }
+        const logger = new Logger({ transports: [] });
+        const context = logger.for("Contextual");
 
             expect(() => context.error(ContextualError, "failed op")).toThrow(ContextualError);
             try {

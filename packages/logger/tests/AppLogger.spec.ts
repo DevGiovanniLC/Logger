@@ -234,7 +234,7 @@ describe("AppLogger", () => {
     });
 
     describe("with metrics disabled", () => {
-        it("should expose zeroed metrics snapshots when metrics are disabled", () => {
+        it("should throw MetricError when metrics are disabled", () => {
             AppLogger.reset();
             AppLogger.init({ transports: [], metrics: { enabled: false } });
 
