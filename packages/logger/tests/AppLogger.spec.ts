@@ -4,6 +4,7 @@ import { AppLogger } from "../src/Logger";
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { MemoryTransport } from "@core/Transport";
 import { Log } from "@models/Log.type";
+import { MetricError } from "@errors/LoggerError";
 
 
 describe("AppLogger", () => {
@@ -237,12 +238,7 @@ describe("AppLogger", () => {
             AppLogger.reset();
             AppLogger.init({ transports: [], metrics: { enabled: false } });
 
-            expect(AppLogger.metrics).toEqual({
-                built: 0,
-                dispatched: 0,
-                filtered: 0,
-                transportErrors: 0,
-            });
+            expect(() => AppLogger.metrics).toThrow(MetricError)
         });
     });
 });

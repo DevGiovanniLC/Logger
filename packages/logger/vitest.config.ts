@@ -12,6 +12,7 @@ export default defineConfig({
             "@models": resolve(rootDir, "src/models"),
             "@utils": resolve(rootDir, "src/utils"),
             "@helpers": resolve(rootDir, "src/helpers"),
+            "@errors": resolve(rootDir, "src/errors"),
         },
     },
     test: {
