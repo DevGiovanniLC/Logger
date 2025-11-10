@@ -194,6 +194,8 @@ export class Logger {
     /**
      * Increment a metrics counter and notify listeners when configured.
      * @param key Metric identifier to increment.
+     * @remarks {@link MetricsOptions.onUpdate} runs once per increment, so emitting a single log
+     * usually triggers two notifications (one for `built`, another for the final outcome).
      */
     private recordMetric(key: MetricsKey): void {
         if (!this.metricsState) return;

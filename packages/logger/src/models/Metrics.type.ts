@@ -13,7 +13,14 @@ export type MetricsCollector = {
 
 /** Configuration for enabling metrics and receiving update notifications. */
 export type MetricsOptions = Readonly<{
+    /**
+     * Toggle metrics collection without needing a callback. Defaults to `false`.
+     */
     enabled?: boolean;
+    /**
+     * Optional observer that receives a fresh {@link LoggerMetrics} snapshot whenever a counter
+     * increments (e.g. `built`, followed by `dispatched` or `filtered`). Expect multiple calls per log.
+     */
     onUpdate?: (metrics: LoggerMetrics) => void;
 }>;
 
