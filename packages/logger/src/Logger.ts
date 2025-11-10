@@ -7,6 +7,7 @@ import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
 import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
 import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
+import { requireMetrics } from "@errors/HandlersFuncts";
 
 
 const DEFAULT_TRANSPORTS: TransportParam = ["console"];
@@ -65,7 +66,10 @@ export class Logger {
      * Snapshot of the currently collected metrics.
      */
     get metrics(): LoggerMetrics {
-        return this.snapshotMetrics();
+        if (this.metricsOptions?.enabled) {
+            return this.snapshotMetrics();
+        }
+        requireMetrics(this)
     }
 
     /**
@@ -407,7 +411,7 @@ export class AppLogger {
      * Expose the live metrics snapshot of the shared logger.
      * @returns Immutable metrics collected by the shared logger.
      */
-    static get metrics(): LoggerMetrics {
+    static get metrics(): LoggerMetrics | never {
         return this.ensureLogger().metrics;
     }
 
