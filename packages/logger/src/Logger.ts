@@ -282,9 +282,9 @@ export class Logger {
  * Useful for simple setups where a shared instance is sufficient.
  */
 export class AppLogger {
-    private static _instance?: ContextLogger;
-    private static _logger?: Logger;
-    private static _options?: LoggerOptions;
+    protected static _instance?: ContextLogger;
+    protected static _logger?: Logger;
+    protected static _options?: LoggerOptions;
 
     /**
      * Obtain a contextual logger for the provided subject.
@@ -306,6 +306,16 @@ export class AppLogger {
         this._options = opts;
         this._logger = new Logger(opts);
         this._instance = this._logger.for("APP");
+    }
+
+    /**
+     * Reset the shared singleton state, discarding cached logger, context, and options.
+     * Useful for tests or scenarios that require a clean initialization cycle.
+     */
+    static reset(): void {
+        this._options = undefined;
+        this._logger = undefined;
+        this._instance = undefined;
     }
 
     /**
