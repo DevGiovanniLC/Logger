@@ -1,5 +1,11 @@
 import { LoggerError, MetricError } from "@errors/LoggerError"
 
+/**
+ * Guard invoked by getters that expose metrics.
+ * Throws a {@link MetricError} with a sanitized stack when metrics are disabled/missing.
+ * @param boundary Function or object owning the getter so we can exclude it from the stack trace.
+ * @throws MetricError Always throws to signal that metrics must be enabled.
+ */
 export function requireMetrics(boundary: Function | Object): never {
     const proto = Object.getPrototypeOf(boundary)
     const getterFn = Object.getOwnPropertyDescriptor(proto, 'metrics')?.get
@@ -11,6 +17,12 @@ export function requireMetrics(boundary: Function | Object): never {
     throw externalizeStack(err)
 }
 
+/**
+ * Remove internal frames from logger errors so consumers see actionable stack traces.
+ * @param err Logger error instance to mutate.
+ * @param exclude Additional patterns that should be trimmed from the stack.
+ * @returns The same error instance with a filtered stack.
+ */
 function externalizeStack(err: LoggerError, exclude: RegExp[] = []): LoggerError {
     if (!err.stack) return
     const lines = err.stack.split('\n')
