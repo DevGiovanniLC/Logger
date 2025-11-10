@@ -41,7 +41,7 @@ export class Logger {
      * @param options Optional customization for transports, minimum level, dispatcher mode, and metrics.
      */
     constructor(readonly options?: LoggerOptions) {
-        const minLevel = options?.minLevel ?? Level.Debug;
+        const minLevel = options?.minLevel ?? Level.debug;
         const transports = TransportResolver.resolve(options?.transports ?? DEFAULT_TRANSPORTS);
 
         this.hasTransport = transports.length > 0;
@@ -98,7 +98,7 @@ export class Logger {
         opt?: ErrorOptions
     ): never;
     emergency(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.Emergency, subject, input, message, opt, Logger.prototype.emergency);
+        return this.handleErrorLevel(Level.emergency, subject, input, message, opt, Logger.prototype.emergency);
     }
 
     /**
@@ -108,7 +108,7 @@ export class Logger {
     alert(subject: string, error: Error): never;
     alert<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     alert(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.Alert, subject, input, message, opt, Logger.prototype.alert);
+        return this.handleErrorLevel(Level.alert, subject, input, message, opt, Logger.prototype.alert);
     }
 
     /**
@@ -123,7 +123,7 @@ export class Logger {
         opt?: ErrorOptions
     ): never;
     critical(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.Critical, subject, input, message, opt, Logger.prototype.critical);
+        return this.handleErrorLevel(Level.critical, subject, input, message, opt, Logger.prototype.critical);
     }
 
     /**
@@ -133,35 +133,35 @@ export class Logger {
     error(subject: string, error: Error): never;
     error<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
     error(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.Error, subject, input, message, opt, Logger.prototype.error);
+        return this.handleErrorLevel(Level.error, subject, input, message, opt, Logger.prototype.error);
     }
 
     /**
      * Level 4 - Warning: Potential risk or degradation.
      */
     warn(subject: string, message: unknown): Log {
-        return this.emit(Level.Warning, subject, message);
+        return this.emit(Level.warning, subject, message);
     }
 
     /**
      * Level 5 - Notice: Significant but normal event. (Configuration change, startup, shutdown)
      */
     notice(subject: string, message: unknown): Log {
-        return this.emit(Level.Notice, subject, message);
+        return this.emit(Level.notice, subject, message);
     }
 
     /**
      * Level 6 - Informational: General informational message.
      */
     info(subject: string, message: unknown): Log {
-        return this.emit(Level.Informational, subject, message);
+        return this.emit(Level.informational, subject, message);
     }
 
     /**
      * Level 7 - Debug: Detailed debug information. (Development diagnostics)
      */
     debug(subject: string, message: unknown): Log {
-        return this.emit(Level.Debug, subject, message);
+        return this.emit(Level.debug, subject, message);
     }
 
     /**

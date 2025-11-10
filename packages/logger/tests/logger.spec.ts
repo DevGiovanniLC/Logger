@@ -25,7 +25,7 @@ describe("Logger", () => {
 
             expect(emitSpy).toHaveBeenCalledTimes(1);
             expect(log).toMatchObject({
-                level: Level.Warning,
+                level: Level.warning,
                 subject: "Auth",
             });
             expect(log.message).toContain('"userId":42');
@@ -88,7 +88,7 @@ describe("Logger", () => {
             const onUpdate = vi.fn();
             const logger = new Logger({
                 transports: [transport],
-                minLevel: Level.Warning,
+                minLevel: Level.warning,
                 metrics: { enabled: true, onUpdate },
             });
 
@@ -399,7 +399,7 @@ describe("Logger", () => {
         const buildLog = (overrides: Partial<Log> = {}): Log =>
             ({
                 id: 42,
-                level: Level.Notice,
+                level: Level.notice,
                 subject: "Formatter",
                 message: "payload",
                 timeStamp: Date.UTC(2024, 0, 1, 12, 0, 0),
@@ -408,7 +408,7 @@ describe("Logger", () => {
 
         it("should include emoji icons when configured with emojis", () => {
             const formatter = new DefaultFormatter({ withEmojis: true });
-            const log = buildLog({ level: Level.Alert });
+            const log = buildLog({ level: Level.alert });
 
             const output = formatter.format(log);
 
@@ -418,7 +418,7 @@ describe("Logger", () => {
 
         it("should wrap formatted output with ANSI codes when color is enabled", () => {
             const formatter = new DefaultFormatter({ color: true });
-            const log = buildLog({ level: Level.Error });
+            const log = buildLog({ level: Level.error });
 
             const output = formatter.format(log);
 

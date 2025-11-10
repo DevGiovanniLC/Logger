@@ -24,7 +24,7 @@ export class SyncDispatcher extends LogDispatcher {
      */
     constructor(
         transports: LogTransport[],
-        minLevel: Level = Level.Debug,
+        minLevel: Level = Level.debug,
         metrics?: MetricsCollector
     ) {
         super(transports, minLevel, metrics);

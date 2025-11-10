@@ -131,7 +131,7 @@ export class ReactiveDispatcher extends LogDispatcher {
      */
     constructor(
         transports: LogTransport[],
-        minLevel: Level = Level.Debug,
+        minLevel: Level = Level.debug,
         opts?: Opts,
         metrics?: MetricsCollector
     ) {

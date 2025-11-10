@@ -26,20 +26,20 @@ export class ConsoleTransport extends LogTransport {
         const text = this.formatter.format(log);
 
         switch (log.level) {
-            case Level.Emergency:
-            case Level.Alert:
-            case Level.Critical:
-            case Level.Error:
+            case Level.emergency:
+            case Level.alert:
+            case Level.critical:
+            case Level.error:
                 console.error(text);
                 break;
-            case Level.Warning:
+            case Level.warning:
                 console.warn(text);
                 break;
-            case Level.Notice:
-            case Level.Informational:
+            case Level.notice:
+            case Level.informational:
                 console.info(text);
                 break;
-            case Level.Debug:
+            case Level.debug:
                 console.debug(text);
                 break;
         }

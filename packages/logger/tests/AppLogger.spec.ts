@@ -31,7 +31,7 @@ describe("AppLogger", () => {
                 expect.objectContaining({
                     subject: "APP",
                     message: "Loaded configuration",
-                    level: Level.Notice,
+                    level: Level.notice,
                 })
             );
         });
@@ -72,7 +72,7 @@ describe("AppLogger", () => {
                 expect.objectContaining({
                     subject: "Scoped",
                     message: "from context",
-                    level: Level.Debug,
+                    level: Level.debug,
                 })
             );
         });
@@ -87,7 +87,7 @@ describe("AppLogger", () => {
             expect(emitSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     subject: "AnalyticsEngine",
-                    level: Level.Informational,
+                    level: Level.informational,
                 })
             );
         });
@@ -95,11 +95,11 @@ describe("AppLogger", () => {
         it("should emit emergency logs when invoked with plain messages", () => {
             const log = AppLogger.emergency("panic");
 
-            expect(log.level).toBe(Level.Emergency);
+            expect(log.level).toBe(Level.emergency);
             expect(log.message).toContain("panic");
             expect(emitSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    level: Level.Emergency,
+                    level: Level.emergency,
                 })
             );
         });
@@ -121,7 +121,7 @@ describe("AppLogger", () => {
                 expect.objectContaining({
                     subject: "Scoped",
                     message: "custom pipeline",
-                    level: Level.Informational,
+                    level: Level.informational,
                 })
             );
         });
@@ -157,7 +157,7 @@ describe("AppLogger", () => {
             const strictEmit = vi.spyOn(strictTransport, "emit");
             AppLogger.init({
                 transports: [strictTransport],
-                minLevel: Level.Error,
+                minLevel: Level.error,
                 metrics: { enabled: true },
             });
 

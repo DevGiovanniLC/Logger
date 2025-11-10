@@ -14,14 +14,15 @@
     7       Debug: debug-level messages
  */
 export enum Level {
-    Emergency, // System unusable
-    Alert,     // Immediate action required
-    Critical,  // Critical condition
-    Error,     // Error condition
-    Warning, // Warning condition
-    Notice,    // Significant but normal
-    Informational, // Informational
-    Debug   // Debug-level message
+    emergency, // System unusable
+    alert,     // Immediate action required
+    critical,  // Critical condition
+    error,     // Error condition
+    warning, // Warning condition
+    notice,    // Significant but normal
+    informational, // Informational
+    debug,   // Debug-level message
+    info = informational //Alias
 }
 
 /** Keys that map to high-severity logging helpers. */
@@ -32,16 +33,16 @@ export type InfoLevelKey = "warn" | "notice" | "info" | "debug";
 
 /** Error-level helper entries paired with their severity indices. */
 export const ERROR_LEVEL_ENTRIES: ReadonlyArray<[ErrorLevelKey, Level]> = [
-    ["emergency", Level.Emergency],
-    ["alert", Level.Alert],
-    ["critical", Level.Critical],
-    ["error", Level.Error],
+    ["emergency", Level.emergency],
+    ["alert", Level.alert],
+    ["critical", Level.critical],
+    ["error", Level.error],
 ];
 
 /** Info-level helper entries paired with their severity indices. */
 export const INFO_LEVEL_ENTRIES: ReadonlyArray<[InfoLevelKey, Level]> = [
-    ["warn", Level.Warning],
-    ["notice", Level.Notice],
-    ["info", Level.Informational],
-    ["debug", Level.Debug],
+    ["warn", Level.warning],
+    ["notice", Level.notice],
+    ["info", Level.informational],
+    ["debug", Level.debug],
 ];
