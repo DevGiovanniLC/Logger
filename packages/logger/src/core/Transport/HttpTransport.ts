@@ -1,5 +1,6 @@
 import { Log } from "@models/Log.type";
 import { LogTransport, TransportParams } from "./LogTransport";
+import { requireEndpoint } from "@errors/TransportError/HttpTransportError";
 
 /**
  * Additional options accepted by {@link HttpTransport}.
@@ -8,7 +9,7 @@ export type HttpTransportParams = TransportParams & {
     /**
      * Fully qualified endpoint that will receive POST requests.
      */
-    endpoint: string;
+    endpoint?: string;
     /**
      * Optional headers appended to every request.
      */
@@ -52,7 +53,7 @@ export class HttpTransport extends LogTransport {
     constructor(params: HttpTransportParams) {
         super("http", params);
         if (!params?.endpoint) {
-            throw new Error("HttpTransport requires an endpoint URL");
+            requireEndpoint(this)
         }
         this.endpoint = params.endpoint;
         this.headers = params.headers ?? {};
