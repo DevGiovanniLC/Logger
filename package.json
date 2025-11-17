@@ -9,6 +9,7 @@
         "build": "npm -w @giodev/logger run build",
         "clean": "rimraf packages/**/dist",
         "start": "npm -w playground run start",
+        "start:server": "npm -w playground run start:server",
         "update": "npm run pack && npm -w playground run update",
         "test": "npm -w @giodev/logger run test"
     },
