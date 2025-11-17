@@ -80,4 +80,4 @@ export abstract class LogTransport {
 /**
  * Built-in transport modes resolved by {@link TransportResolver}.
  */
-export type TransportMode = 'console' | 'console-emoji' | 'console-color' | 'console-styled'
+export type TransportMode = 'console' | 'console-emoji' | 'console-color' | 'console-styled' | 'file'
