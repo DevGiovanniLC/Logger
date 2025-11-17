@@ -1,20 +1,13 @@
-import { LoggerError, MetricError } from "@errors/LoggerError"
+import { LoggerError } from "@errors/LoggerError"
 
-/**
- * Guard invoked by getters that expose metrics.
- * Throws a {@link MetricError} with a sanitized stack when metrics are disabled/missing.
- * @param boundary Function or object owning the getter so we can exclude it from the stack trace.
- * @throws MetricError Always throws to signal that metrics must be enabled.
- */
-export function requireMetrics(boundary: Function | Object): never {
+export function errorThrower(boundary: Function | Object, error: LoggerError): never{
     const proto = Object.getPrototypeOf(boundary)
     const getterFn = Object.getOwnPropertyDescriptor(proto, 'metrics')?.get
     // Excluir el getter del stack para que apunte al caller
-    const err = new MetricError('You have to enable metrics to use them', 'METRICS_DISABLED', 1)
     if (getterFn && Error.captureStackTrace) {
-        Error.captureStackTrace(err, getterFn)
+        Error.captureStackTrace(error, getterFn)
     }
-    throw externalizeStack(err)
+    throw externalizeStack(error)
 }
 
 /**

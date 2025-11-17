@@ -7,7 +7,8 @@ import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
 import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
 import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
-import { requireMetrics } from "@errors/HandlersFuncts";
+import { requireMetrics } from "@errors/LoggerError";
+
 
 
 const DEFAULT_TRANSPORTS: TransportParam = ["console"];
