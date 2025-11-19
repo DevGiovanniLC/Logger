@@ -1,6 +1,6 @@
-import { LoggerError } from "@errors/LoggerError"
+import { InternalError } from "@errors/LoggerError"
 
-export function errorThrower(boundary: Function | Object, error: LoggerError): never{
+export function errorThrower(boundary: Function | Object, error: InternalError): never{
     const proto = Object.getPrototypeOf(boundary)
     const getterFn = Object.getOwnPropertyDescriptor(proto, 'metrics')?.get
     // Excluir el getter del stack para que apunte al caller
@@ -16,7 +16,7 @@ export function errorThrower(boundary: Function | Object, error: LoggerError): n
  * @param exclude Additional patterns that should be trimmed from the stack.
  * @returns The same error instance with a filtered stack.
  */
-function externalizeStack(err: LoggerError, exclude: RegExp[] = []): LoggerError {
+function externalizeStack(err: InternalError, exclude: RegExp[] = []): InternalError {
     if (!err.stack) return
     const lines = err.stack.split('\n')
     const head = lines[0]

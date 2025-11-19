@@ -1,7 +1,8 @@
 import { errorThrower } from "@errors/handlers/HandlersFuncts";
-import { LoggerError } from "@errors/LoggerError";
+import { InternalError } from "@errors/InternalError";
 
-export class HttpTransportError extends LoggerError{
+
+export class HttpTransportError extends InternalError {
     public status: number = 40
 
     constructor(
@@ -17,7 +18,7 @@ export class HttpTransportError extends LoggerError{
 
 export function requireEndpoint(boundary: Function | Object): never {
     return errorThrower(
-        boundary ,
+        boundary,
         new HttpTransportError('You must provide an endpoint.', 'ENDPOINT_REQUIRED', 1)
     )
 }

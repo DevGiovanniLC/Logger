@@ -7,7 +7,7 @@ import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
 import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
 import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
-import { requireMetrics } from "@errors/LoggerError";
+import { requireInitialization, requireMetrics } from "@errors/LoggerError";
 
 
 
@@ -449,7 +449,7 @@ export class AppLogger {
      */
     private static ensureLogger(): Logger {
         if (this._logger) return this._logger;
-        if (!this._options) throw new Error("AppLogger.init() requested");
+        if (!this._options) requireInitialization(this);
         this._logger = new Logger(this._options);
         this._instance = this._logger.for("APP");
         return this._logger;
