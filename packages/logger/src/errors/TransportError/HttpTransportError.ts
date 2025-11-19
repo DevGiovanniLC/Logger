@@ -1,7 +1,6 @@
 import { errorThrower } from "@errors/handlers/HandlersFuncts";
 import { InternalError } from "@errors/InternalError";
 
-
 export class HttpTransportError extends InternalError {
     public status: number = 40
 
@@ -45,6 +44,18 @@ export function requestError(boundary: Function | Object, status: number): never
             `HttpTransport request failed with status ${status}`,
             'HTTP_REQUEST_FAILED',
             3
+        )
+    )
+}
+
+export function networkFailure(boundary: Function | Object, cause: unknown): never {
+    const detail = cause instanceof Error ? cause.message : String(cause);
+    return errorThrower(
+        boundary,
+        new HttpTransportError(
+            `HttpTransport failed before receiving a response: ${detail}`,
+            'HTTP_NETWORK_FAILURE',
+            4
         )
     )
 }

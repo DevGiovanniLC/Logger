@@ -1,6 +1,6 @@
 import { Log } from "@models/Log.type";
 import { LogTransport, TransportParams } from "./LogTransport";
-import { requestError, requireEndpoint, requireFetchImplementation } from "@errors/TransportError/HttpTransportError";
+import { networkFailure, requestError, requireEndpoint, requireFetchImplementation } from "@errors/TransportError/HttpTransportError";
 
 /**
  * Additional options accepted by {@link HttpTransport}.
@@ -132,6 +132,8 @@ export class HttpTransport extends LogTransport {
             if (!response.ok) {
                 requestError(this, response.status);
             }
+        } catch (error) {
+            networkFailure(this, error);
         } finally {
             clearTimeout(timer);
         }

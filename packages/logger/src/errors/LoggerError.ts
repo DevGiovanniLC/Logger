@@ -18,7 +18,22 @@ export class LoggerError extends InternalError {
 export function requireMetrics(boundary: Function | Object): never {
     return errorThrower(
         boundary,
-        new LoggerError('You have to enable metrics to use them', 'METRICS_DISABLED', 1)
+        new LoggerError(
+            'You have to enable metrics to use them',
+            'METRICS_DISABLED',
+            1
+        )
+    )
+}
+
+export function OnUpdateCallbackError(boundary: Function | Object): never {
+    return errorThrower(
+        boundary,
+        new LoggerError(
+            ' Callback function onUpdate failed',
+            'ON_UPDATE_CALLBACK_FAILED',
+            2
+        )
     )
 }
 
@@ -43,6 +58,10 @@ export class AppLoggerError extends InternalError {
 export function requireInitialization(boundary: Function | Object): never {
     return errorThrower(
         boundary,
-        new AppLoggerError('AppLogger.init() requested', 'REQUIRE_INITIALIZATION', 1)
+        new AppLoggerError(
+            'AppLogger.init() requested',
+            'REQUIRE_INITIALIZATION',
+            1
+        )
     )
 }

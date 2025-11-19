@@ -2,6 +2,9 @@ import { Log } from "@models/Log.type";
 import { LogTransport, TransportParams } from "./LogTransport";
 import fs from "fs";
 import * as path from "path";
+import { requireFileSystem } from "@errors/TransportError/FileTransportError";
+
+const isNode = typeof process !== "undefined" && !!process.versions?.node;
 
 
 /**
@@ -32,6 +35,10 @@ export class FileTransport extends LogTransport {
 
         super('file', transportParams)
         this.setup(transportParams?.filePath)
+
+        if (!isNode) {
+            requireFileSystem(this)
+        }
     }
 
     /**

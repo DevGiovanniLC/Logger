@@ -7,7 +7,7 @@ import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers
 import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
 import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
 import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
-import { requireInitialization, requireMetrics } from "@errors/LoggerError";
+import { OnUpdateCallbackError, requireInitialization, requireMetrics } from "@errors/LoggerError";
 
 
 
@@ -202,7 +202,9 @@ export class Logger {
         if (!this.metricsState) return;
         this.metricsState[key] += 1;
         const callback = this.callback
-        if (callback) callback(this.snapshotMetrics());
+        try {
+            if (callback) callback(this.snapshotMetrics());
+        } catch { OnUpdateCallbackError(this) }
     }
 
     /**
