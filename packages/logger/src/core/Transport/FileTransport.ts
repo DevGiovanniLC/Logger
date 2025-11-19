@@ -30,6 +30,11 @@ export class FileTransport extends LogTransport {
     protected dirPath: string;
     protected filePath: string;
 
+    /**
+     * Create a file transport and ensure the runtime provides the required APIs.
+     * @param transportParams Formatter configuration or a pre-resolved path.
+     * @throws FileTransportError when the filesystem is unavailable.
+     */
     constructor(transportParams?: FileTransportParams) {
         if (!isNode) {
             requireFileSystem(FileTransport);
@@ -73,6 +78,7 @@ export class FileTransport extends LogTransport {
 
     /**
      * Create the directory tree on demand.
+     * @throws FileTransportError when the target path cannot be created.
      */
     private ensureDirectory(targetDir: string) {
         try {
@@ -85,6 +91,7 @@ export class FileTransport extends LogTransport {
     /**
      * Append the chunk at the end of the current log file.
      * Throws if the write fails so callers notice transport errors instantly.
+     * @throws FileTransportError when the write fails.
      */
     private appendLine(chunk: string) {
         try {

@@ -55,6 +55,11 @@ export class HttpTransport extends LogTransport {
     private readonly queue: PendingPayload[] = [];
     private flushing = false;
 
+    /**
+     * Create an HTTP transport that enqueues logs and posts them sequentially.
+     * @param params Transport configuration including endpoint and headers.
+     * @throws HttpTransportError when no endpoint is provided or fetch is unavailable.
+     */
     constructor(params: HttpTransportParams) {
         super('http', params);
         if (!params?.endpoint) {
@@ -123,6 +128,7 @@ export class HttpTransport extends LogTransport {
 
     /**
      * Send the payload to the configured endpoint with timeout protection.
+     * @throws HttpTransportError when the request fails due to HTTP/network errors.
      */
     private async post(body: string): Promise<void> {
         const controller = new AbortController();
