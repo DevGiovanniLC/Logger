@@ -2,7 +2,7 @@ import { errorThrower } from "@errors/handlers/HandlersFuncts";
 import { InternalError } from "@errors/InternalError";
 
 export class HttpTransportError extends InternalError {
-    public status: number = 40
+    public status: number = 60
 
     constructor(
         message: string,

@@ -1,13 +1,13 @@
 import { LogTransport, TransportParams } from "./LogTransport"
 import { Log } from "@models/Log.type"
 import { Level } from "@models/Level.type"
-
-
+import { requireConsole } from "@errors/TransportError/ConsoleTransportError"
 
 /**
  * Transport that writes formatted logs to the host console.
  */
 export class ConsoleTransport extends LogTransport {
+    private readonly targetConsole: Console;
 
     /**
      * Create a console transport.
@@ -15,7 +15,16 @@ export class ConsoleTransport extends LogTransport {
      */
     constructor(consoleTransportOptions?: TransportParams
     ) {
+        const globalConsole = (typeof console !== "undefined" ? console : undefined) as Console | undefined;
+        const missingMethods =
+            typeof globalConsole === "object"
+                ? (["error", "warn", "info", "debug"] as const).filter((method) => typeof (globalConsole as any)[method] !== "function")
+                : ["error", "warn", "info", "debug"];
+        if (!globalConsole || missingMethods.length > 0) {
+            requireConsole(ConsoleTransport, missingMethods);
+        }
         super("console", consoleTransportOptions);
+        this.targetConsole = globalConsole;
     }
 
     /**
@@ -24,23 +33,24 @@ export class ConsoleTransport extends LogTransport {
      */
     protected performEmit(log: Log): void {
         const text = this.formatter.format(log);
+        const consoleRef = this.targetConsole;
 
         switch (log.level) {
             case Level.emergency:
             case Level.alert:
             case Level.critical:
             case Level.error:
-                console.error(text);
+                consoleRef.error(text);
                 break;
             case Level.warning:
-                console.warn(text);
+                consoleRef.warn(text);
                 break;
             case Level.notice:
             case Level.informational:
-                console.info(text);
+                consoleRef.info(text);
                 break;
             case Level.debug:
-                console.debug(text);
+                consoleRef.debug(text);
                 break;
         }
     }

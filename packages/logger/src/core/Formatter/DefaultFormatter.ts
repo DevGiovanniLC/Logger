@@ -1,6 +1,7 @@
 import { Log } from "@models/Log.type";
 import { LogFormatter } from "./LogFormatter";
 import { LevelColor } from "@utils/TextStyler";
+import { requireDateFormatter } from "@errors/FormatterError/FormatterError";
 
 
 /**
@@ -67,10 +68,14 @@ export class DefaultFormatter implements LogFormatter {
         this.useColor = options.color ?? false;
         const key: keyof typeof TITLE_SETS = withEmojis ? "true" : "false";
         this.titles = TITLE_SETS[key];
-        this.dateFormatter = new Intl.DateTimeFormat(options.localeDate, {
-            dateStyle: "short",
-            timeStyle: "medium",
-        });
+        try {
+            this.dateFormatter = new Intl.DateTimeFormat(options.localeDate, {
+                dateStyle: "short",
+                timeStyle: "medium",
+            });
+        } catch (error) {
+            requireDateFormatter(DefaultFormatter, options.localeDate, error);
+        }
     }
 
     /**
