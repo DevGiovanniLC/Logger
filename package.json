@@ -11,10 +11,12 @@
         "start": "npm -w playground run start",
         "start:server": "npm -w playground run start:server",
         "update": "npm run pack && npm -w playground run update",
-        "test": "npm -w @giodev/logger run test"
+        "test": "npm -w @giodev/logger run test",
+        "format": "prettier --write \"src/**/*.{ts,html,css,scss,json}\""
     },
     "devDependencies": {
         "@types/node": "^24.9.2",
+        "prettier": "^3.6.2",
         "rimraf": "^6.0.0",
         "tsup": "^8.5.0",
         "typescript": "^5.9.3",
