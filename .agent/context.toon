@@ -1,0 +1,502 @@
+project:
+  name:  @giodev/logger
+  version:  1.0.0
+  description:  Professional logging system in TypeScript that implements RFC 5424 severity levels
+  language:  TypeScript
+  typescript_version:  5.9+
+  node_version:  18+
+  owner:  DevGiovanniLC
+  repository:  https://github.com/DevGiovanniLC/Logger
+principles:
+  composability:  Architecture based on interchangeable components
+  rfc5424_compliance:  Standardized severity levels (0=Emergency through 7=Debug)
+  type_safety:  Strong typing throughout the codebase
+  performance:  Synchronous and reactive dispatch strategies
+  observability:  Integrated metrics system with real-time callbacks
+  testability:  Explicit testing APIs (drain(), reset(), snapshots)
+structure:
+  workspace:  z:\Logger
+  type:  monorepo
+  packages:
+    logger:
+      path:  packages/logger
+      name:  @giodev/logger
+      type:  core library
+      subdirectories:
+        src:  Source code
+        tests:  Vitest test suites
+        dist:  Compiled output (generated)
+    playground:
+      path:  packages/playground
+      name:  playground
+      type:  demo application
+      purpose:  Manual transport experimentation and HTTP ingest showcase
+      subdirectories:
+        src:  TypeScript entrypoints (CLI demo + HTTP server)
+        dist:  Transpiled playground output
+        .logs:  Captured demo output grouped by date
+      entrypoints:
+        cli:  src/index.ts - Spawns a contextual logger with file, console-styled and HTTP transports
+        http_server:  src/server.ts - Minimal POST /logs endpoint that prints received payloads
+      dependencies:
+        runtime:  ["@giodev/logger", "typescript"]
+        dev:  ["@types/node"]
+      workflows:
+        - Run npm start:  server to capture HTTPTransport emissions locally
+        - Run npm start to compile TypeScript and emit sample logs through all configured transports
+      log_flow:  CLI pushes structured logs -> transports dispatch -> optional HTTP server records payload
+levels:
+  description:  RFC 5424 Severity Levels
+  reference:  https://www.rfc-editor.org/rfc/rfc5424.html
+  levels:  items[8]{code,name,category,description,example}:
+      0,emergency,error,System is unusable,Data loss, total system failure
+      1,alert,error,Immediate action required,Critical security failure
+      2,critical,error,Critical condition,Core component failure
+      3,error,error,Error condition,Exception or failed operation
+      4,warning,info,Warning condition,Potential risk or degradation
+      5,notice,info,Significant but normal condition,Configuration, startup, shutdown
+      6,informational,info,Informational messages,Normal operation information
+      7,debug,info,Debug messages,Detailed debugging information
+components:
+  logger:
+    file:  src/Logger.ts
+    type:  class
+    description:  Main logging class
+    responsibilities:  items[4]:
+        - Manage logging lifecycle
+        - Filter logs by minLevel
+        - Record metrics
+        - Create contextual loggers
+    constructor_options:
+      minLevel:
+        type:  Level
+        default:  Level.debug
+        description:  Minimum logging level
+      transports:
+        type:  TransportParam
+        default:  ["console"]
+        description:  Transports for emission
+      dispatcher:
+        type:  DispatcherMode
+        values:  items[2]:
+            - sync
+            - reactive
+        description:  Dispatch strategy
+      metrics:
+        type:  MetricsOptions | boolean
+        description:  Metrics configuration
+    public_methods:  items[10]:
+        - emergency(subject, message):  Log | never
+        - alert(subject, message):  Log | never
+        - critical(subject, message):  Log | never
+        - error(subject, message):  Log | never
+        - warn(subject, message):  Log
+        - notice(subject, message):  Log
+        - info(subject, message):  Log
+        - debug(subject, message):  Log
+        - for(ctx):  ContextLogger
+        - get metrics():  LoggerMetrics
+  app_logger:
+    file:  src/Logger.ts
+    type:  class
+    description:  Singleton for application-level logging
+    usage:  Initialize once, use globally
+    static_methods:  items[11]:
+        - init(options?):  void
+        - emergency(subject, message)
+        - alert(subject, message)
+        - critical(subject, message)
+        - error(subject, message)
+        - warn(subject, message)
+        - notice(subject, message)
+        - info(subject, message)
+        - debug(subject, message)
+        - get metrics():  LoggerMetrics
+        - reset():  void
+  dispatchers:
+    base_class:  LogDispatcher
+    file:  src/core/Dispatcher/
+    abstract_methods:  items[1]:
+        - dispatch(log:  Log): void
+    implementations:  items[2]:
+        - name:  SyncDispatcher
+        characteristics:  items[3]:
+            - Immediate emission
+            - Deterministic
+            - No buffering
+        use_case:  CLIs, scripts, services requiring strict ordering
+        advantages:  items[3]:
+            - Guaranteed order
+            - Easy debugging
+            - Ideal for tests
+        disadvantages:  items[2]:
+            - Blocks during I/O
+            - Lower performance at high volume
+        - name:  ReactiveDispatcher
+        characteristics:  items[4]:
+            - Automatic batching
+            - MessageChannel for scheduling
+            - Auto-dispose after inactivity
+            - drain() method for testing
+        use_case:  Web apps, high-throughput services
+        advantages:  items[3]:
+            - Non-blocking
+            - Better performance
+            - Elegant shutdown handling
+        disadvantages:  items[2]:
+            - Order not guaranteed between batches
+            - Additional complexity
+  transports:
+    base_class:  LogTransport
+    file:  src/core/Transport/LogTransport.ts
+    abstract_methods:  items[1]:
+        - abstract performEmit(log:  Log): void
+    public_methods:  items[4]:
+        - emit(log:  Log): void
+        - enable():  void
+        - disable():  void
+        - get transportName():  string
+    implementations:  items[4]:
+        - name:  ConsoleTransport
+        purpose:  Console output
+        features:  items[3]:
+            - Level-based routing
+            - ANSI colors
+            - Optional emojis
+        - name:  MemoryTransport
+        purpose:  In-memory storage
+        features:  items[3]:
+            - Limited buffer
+            - Configurable maxBufferSize
+            - snapshot() method
+        - name:  FileTransport
+        purpose:  File writing
+        features:  items[2]:
+            - Configurable path
+            - Append mode
+        - name:  HttpTransport
+        purpose:  HTTP endpoint delivery
+        features:  items[3]:
+            - Configurable URL
+            - Custom headers
+            - Batching
+  formatters:
+    interface:  LogFormatter
+    file:  src/core/Formatter/LogFormatter.ts
+    contract:
+      format:
+        input:  log: Log
+        output:  string
+        description:  Converts structured log to readable string
+    implementations:  items[1]:
+        - name:  DefaultFormatter
+        file:  src/core/Formatter/DefaultFormatter.ts
+        options:
+          withEmojis:
+            type:  boolean
+            description:  🚨 vs [E] headers
+          color:
+            type:  boolean
+            description:  ANSI colors
+          localeDate:
+            type:  string
+            default:  en-US
+            description:  Locale for timestamps
+        output_example:  🚨 [2025-11-19 14:30:45] emergency/AuthService: Failed to initialize
+data_models:
+  log:
+    file:  src/models/Log.type.ts
+    type:  type
+    properties:
+      level:  Level
+      subject:  string
+      timestamp:  Date
+      message:  string
+      context:  ContextLogger?
+    description:  Fully normalized log record
+  context_logger:
+    file:  src/models/ContextLogger.type.ts
+    type:  type
+    description:  Contextual logger obtained via logger.for()
+    methods:  items[8]:
+        - emergency(message):  Log | never
+        - alert(message):  Log | never
+        - critical(message):  Log | never
+        - error(message):  Log | never
+        - warn(message):  Log
+        - notice(message):  Log
+        - info(message):  Log
+        - debug(message):  Log
+  metrics:
+    file:  src/models/Metrics.type.ts
+    keys:  items[4]{name,description}:
+        built,Total logs created
+        dispatched,Logs emitted after passing filters
+        filtered,Logs discarded by minLevel
+        transportErrors,Failures during transport emission
+    callback_frequency:  Executes twice per log typically: when built increments and when dispatched/filtered increment
+utilities:
+  error_handler:
+    file:  src/helpers/ErrorHandler.ts
+    functions:  items[3]{name,description}:
+        buildError,Creates a typed error constructor
+        captureStack,Captures current stack trace
+        isErrorBuilder,Validates if function is an error builder
+  transport_resolver:
+    file:  src/helpers/TransportResolver.ts
+    description:  Resolves strings like 'console' to Transport instances
+    examples:  items[2]:
+        - TransportResolver.resolve('console') → [ConsoleTransport instance]
+        - TransportResolver.resolve([memory, http]) → [MemoryTransport, HttpTransport]
+  message_normalizer:
+    file:  src/utils/MessageNormalizer.ts
+    functions:  items[2]{name,description}:
+        normalizeMessage,Converts any type to readable string
+        resolveSubject,Extracts subject from object or string
+  text_styler:
+    file:  src/utils/TextStyler.ts
+    description:  Utilities for ANSI colors and terminal styling
+testing:
+  framework:  Vitest
+  version:  4.0.7
+  config_file:  packages/logger/vitest.config.ts
+  test_location:  packages/logger/tests/**/*.spec.ts
+  utilities:  items[3]:
+      - name:  ReactiveDispatcher.drain()
+      purpose:  Guarantee deterministic emission in tests
+      usage:  await logger.drain()
+      - name:  MemoryTransport
+      purpose:  Capture emitted logs
+      properties:  items[2]:
+          - logs
+          - snapshot()
+      - name:  AppLogger.reset()
+      purpose:  Clean singleton between tests
+      usage:  afterEach(() => AppLogger.reset())
+  test_suites:  items[9]{name,coverage}:
+      AppLogger.spec.ts,Singleton behavior
+      Logger.spec.ts,Core Logger functionality
+      DispatcherRegistry.spec.ts,Dispatcher initialization
+      ReactiveDispatcher.spec.ts,Async batching, drain
+      SyncDispatcher.spec.ts,Synchronous dispatch
+      DefaultFormatter.spec.ts,Output formatting
+      ConsoleTransport.spec.ts,Console routing
+      MemoryTransport.spec.ts,Buffer management
+      TransportResolver.spec.ts,String → Transport resolution
+build_and_distribution:
+  tool:  tsup
+  config_file:  packages/logger/tsup.config.ts
+  outputs:
+    cjs:  dist/index.cjs
+    esm:  dist/index.mjs
+    types:  dist/index.d.ts
+  sub_exports:  items[2]:
+      - path:  ./Transport
+      formats:  items[3]:
+          - cjs
+          - esm
+          - d.ts
+      - path:  ./Formatter
+      formats:  items[3]:
+          - cjs
+          - esm
+          - d.ts
+  npm_scripts:  items[6]{name,description}:
+      npm run build,Compiles with tsup
+      npm run clean,Removes dist/
+      npm run test,Runs Vitest
+      npm run pack,Build + npm pack
+      npm start,Starts playground dev server
+      npm start:  server,Starts playground backend
+  release_pipeline:
+    description:  Repeatable checklist for publishing @giodev/logger
+    steps:  items[6]:
+        - Ensure main is up to date and working tree clean
+        - Run npm run test inside packages/logger (required gate)
+        - Run npm run build && npm run pack to validate emitted artifacts
+        - Update package versions via npm version <patch|minor|major> across workspaces
+        - Run npm publish from packages/logger (uses dist/ + generated .tgz)
+        - Tag release and push git refs (tags + main) before updating playground dependency tarball
+api_exports:
+  main_exports:
+    file:  src/index.ts
+    exports:  items[4]:
+        - { Logger, AppLogger } from './Logger'
+        - * from '@models/Level.type'
+        - * from '@models/Log.type'
+        - * from '@models/Metrics.type'
+  transport_exports:
+    file:  src/core/Transport/index.ts
+    exports:  items[3]:
+        - { LogTransport, TransportParams }
+        - { ConsoleTransport, MemoryTransport, FileTransport, HttpTransport }
+        - { TransportResolver }
+  formatter_exports:
+    file:  src/core/Formatter/index.ts
+    exports:  items[2]:
+        - { LogFormatter, FormatterParams }
+        - { DefaultFormatter }
+usage_patterns:
+  basic_setup:
+    description:  Minimal Logger setup
+    code_example:  |
+      import { Logger, Level } from '@giodev/logger'
+      const logger = new Logger({
+        minLevel:  Level.debug,
+        transports:  ['console'],
+        dispatcher:  'sync'
+      })
+      logger.info('App', 'Server started')
+  advanced_setup:
+    description:  Setup with metrics and multiple transports
+    code_example:  |
+      const memory = new MemoryTransport({ maxBufferSize:  500 })
+      const logger = new Logger({
+        minLevel:  Level.informational,
+        transports:  [memory, 'console'],
+        dispatcher:  'reactive',
+        metrics:  {
+          enabled:  true,
+          onUpdate:  (snapshot) => console.log('Metrics:', snapshot)
+        }
+      })
+  error_handling:
+    description:  Different ways to log errors
+    examples:  items[3]:
+        - logger.error('DB', new Error('Connection timeout'))
+        - const HttpError = buildError(class extends Error {}); logger.critical('API', HttpError, 'Failed')
+        - logger.error('Service', new Error('Failed'), { cause:  originalError })
+  context_logging:
+    description:  Use ContextLogger for simplified API
+    code_example:  |
+      const userLogger = logger.for('AuthService')
+      userLogger.info('User login') // No need to repeat subject
+  testing_reactive:
+    description:  Testing with ReactiveDispatcher
+    code_example:  |
+      test('logs batching', async () => {
+        const memory = new MemoryTransport()
+        const logger = new Logger({ transports:  [memory], dispatcher: 'reactive' })
+        logger.info('test', 'message')
+        await logger.drain()
+        expect(memory.logs).toHaveLength(1)
+      })
+  app_logger_singleton:
+    description:  Initialize once and reuse AppLogger across modules
+    code_example:  |
+      import { AppLogger, Level } from '@giodev/logger'
+      AppLogger.init({
+        minLevel:  Level.notice,
+        transports:  ['console', 'memory'],
+        dispatcher:  'reactive'
+      })
+      export function bootstrap() {
+        AppLogger.info('Bootstrap', 'Service starting')
+      }
+      process.on('SIGTERM', () => {
+        AppLogger.notice('Bootstrap', 'Graceful shutdown')
+        AppLogger.reset()
+      })
+extensibility:
+  custom_transport:
+    description:  Create a custom transport
+    steps:  items[3]:
+        - Inherit from LogTransport
+        - Implement abstract performEmit(log:  Log): void
+        - Optionally override shouldEmit(log:  Log): boolean
+  custom_formatter:
+    description:  Create a custom formatter
+    steps:  items[3]:
+        - Implement LogFormatter interface
+        - Implement format(log:  Log): string
+        - Inject via TransportParams
+  custom_dispatcher:
+    description:  Create a custom dispatcher
+    steps:  items[3]:
+        - Inherit from LogDispatcher
+        - Implement abstract dispatch(log:  Log): void
+        - Use emitToTransports(log:  Log) helper for emission
+performance_notes:
+  sync_dispatcher:  O(1) per log, zero latency
+  reactive_dispatcher:  O(n) in batches, low overhead per message
+  memory_transport:  Limited ring buffer, no memory leaks
+  disabled_transport:  Cost ~0 (early return)
+security_and_privacy:
+  features:  items[4]:
+      - Message normalization prevents internal type exposure
+      - Transports and dispatcher not publicly exposed
+      - Immutable logging objects (Readonly<>)
+      - Explicit context control in ContextLogger
+error_recovery:
+  features:  items[4]:
+      - Try-catch in emitToTransports() prevents failure cascade
+      - transportErrors metric records failures
+      - Transports silently disabled if they fail
+      - Logger continues working even if a transport fails
+debugging_guide:
+  logs_not_appearing:  items[4]:
+      - Check minLevel:  Is log level >= minLevel?
+      - Check transports:  Is at least one configured?
+      - Check shouldEmit():  Is the transport filtered?
+      - Check enabled:  Is the transport enabled?
+  metrics_not_updating:  items[3]:
+      - Is metrics.enabled true?
+      - Are Logger methods being called (not AppLogger without init)?
+      - Is the onUpdate callback throwing errors?
+  reactive_tests_flaky:  items[3]:
+      - Always use await logger.drain() after logs
+      - Use MemoryTransport to capture and verify
+      - Do not assume order between batches
+directory_structure:
+  packages/logger/src:
+    index.ts:  Main export
+    Logger.ts:  Main class + AppLogger
+    core/Dispatcher:  items[4]:
+        - LogDispatcher.ts - Abstract base
+        - SyncDispatcher.ts - Sync implementation
+        - ReactiveDispatcher.ts - Async implementation
+        - DispatcherRegistry.ts - Factory & registration
+    core/Formatter:  items[3]:
+        - LogFormatter.ts - Interface
+        - DefaultFormatter.ts - Default implementation
+        - index.ts - Exports
+    core/Transport:  items[6]:
+        - LogTransport.ts - Abstract base
+        - ConsoleTransport.ts
+        - MemoryTransport.ts
+        - FileTransport.ts
+        - HttpTransport.ts
+        - index.ts - Exports
+    errors:  items[2]:
+        - LoggerError.ts - Custom error types
+        - handlers/HandlersFuncts.ts - Error utilities
+    helpers:  items[2]:
+        - ErrorHandler.ts - buildError, captureStack
+        - TransportResolver.ts - String → Transport resolution
+    models:  items[4]:
+        - Level.type.ts - RFC 5424 levels
+        - Log.type.ts - Log data structure
+        - ContextLogger.type.ts - Contextual logging interface
+        - Metrics.type.ts - Observability types
+    utils:  items[2]:
+        - MessageNormalizer.ts - Message & subject resolution
+        - TextStyler.ts - ANSI color utilities
+future_roadmap:
+  potential_features:  items[7]:
+      - Middleware hooks for transformation
+      - Built-in rate limiting
+      - Compression for historical logs
+      - Buffer persistence
+      - Advanced filtering (pattern matching)
+      - Log aggregation client (ElasticSearch, DataDog)
+      - OpenTelemetry integration
+  performance_improvements:  items[3]:
+      - Worker threads for HTTP transport
+      - MessageChannel usage optimization
+      - Lazy formatter initialization
+metadata:
+  last_updated:  2025-11-19
+  repository_owner:  DevGiovanniLC
+  repository_name:  Logger
+  current_branch:  main
+  standards_reference:  RFC 5424 - https://www.rfc-editor.org/rfc/rfc5424.html
