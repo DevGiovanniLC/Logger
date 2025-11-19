@@ -12,6 +12,7 @@ export class ConsoleTransport extends LogTransport {
     /**
      * Create a console transport.
      * @param consoleTransportOptions Optional custom formatter or formatter options.
+     * @throws ConsoleTransportError when the host console implementation is missing.
      */
     constructor(consoleTransportOptions?: TransportParams) {
         const globalConsole = (

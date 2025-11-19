@@ -1,6 +1,9 @@
 import { errorThrower } from '@errors/handlers/HandlersFuncts';
 import { InternalError } from '@errors/InternalError';
 
+/**
+ * Error raised when the console transport cannot rely on the host console.
+ */
 export class ConsoleTransportError extends InternalError {
     public status: number = 40;
 
@@ -15,6 +18,11 @@ export class ConsoleTransportError extends InternalError {
     }
 }
 
+/**
+ * Guard that enforces the availability of the required console APIs.
+ * @param boundary Object/function used to trim stack frames.
+ * @param missing Optional list of console methods not provided by the runtime.
+ */
 export function requireConsole(
     boundary: Function | Object,
     missing?: string[],

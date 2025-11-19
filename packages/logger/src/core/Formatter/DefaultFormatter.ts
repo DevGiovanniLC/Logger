@@ -61,6 +61,7 @@ export class DefaultFormatter implements LogFormatter {
     /**
      * Create a formatter instance.
      * @param options Tuning parameters for emojis, localization, and color usage.
+     * @throws FormatterError when Intl.DateTimeFormat cannot be instantiated.
      */
     constructor(options: FormatterParams = {}) {
         const withEmojis = options.withEmojis ?? false;
