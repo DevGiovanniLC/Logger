@@ -11,11 +11,14 @@
 - RFC 5424 levels (`Emergency` through `Debug`) with typed helpers.
 - Contextual API (`Logger.for(ctx)`) and an `AppLogger` singleton for fast initialization.
 - Available dispatchers: `SyncDispatcher` (deterministic emission) and `ReactiveDispatcher` (async batching with auto-shutdown on inactivity).
-- Included transports: console with level routing and memory with a bounded buffer; both configurable via `TransportResolver`.
+- Included transports: console with level routing, memory with a bounded buffer, filesystem append, and HTTP POST; all configurable via `TransportResolver`.
 - `DefaultFormatter` with emoji/ASCII headers, ANSI colors, and localized timestamps.
 - Metrics (`built`, `dispatched`, `filtered`, `transportErrors`) with a live callback.
 - Utilities to normalize messages, build and throw errors, and style text.
 - `AppLogger.reset()` to clear singleton state between tests or runtime reconfiguration.
+
+### Status
+`@giodev/logger` is in active beta: transports and dispatchers are functional, but HTTP/file persistence still lack enterprise features (retry backoff, persistent queues, rotation/compression), and the RFC 5424 surface is incomplete (no structured data or facilities yet). Expect changes until the roadmap below lands.
 
 ### Repository Structure
 - `packages/logger`: source code, tests, and package build.
@@ -100,9 +103,12 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - `npm run pack`: generates `giodev-logger-1.0.0.tgz`.
 
 ### Roadmap
-- Implement `HttpTransport`.
 - Expand test coverage (transports, dispatchers, formats).
-- Review full RFC 5424 compliance (structured data, facility codes).
+- Complete RFC 5424 compliance (facility codes, structured data payloads).
+- Harden `HttpTransport` (persistent queue, retries with backoff/jitter, auth helpers).
+- Make `TransportResolver` extensible with custom factories/presets (`http`, `memory`, user modules).
+- Extend metrics with richer telemetry (per-level counters, latency histograms, Prometheus/OpenTelemetry hooks).
+- Add rotation/compression/async writes to `FileTransport` plus optional uploads to S3/Blob storage.
 
 ---
 
@@ -115,11 +121,14 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - Niveles RFC 5424 (`Emergency` a `Debug`) con helpers tipados.
 - API contextual (`Logger.for(ctx)`) y un singleton `AppLogger` para inicializaciones rapidas.
 - Dispatchers disponibles: `SyncDispatcher` (emision deterministica) y `ReactiveDispatcher` (batch asincrono con auto-apagado por inactividad).
-- Transportes incluidos: consola con ruteo por nivel y memoria con buffer limitado; ambos configurables via `TransportResolver`.
+- Transportes incluidos: consola con ruteo por nivel, memoria con buffer limitado, archivos con append y HTTP POST; todos configurables via `TransportResolver`.
 - `DefaultFormatter` con headers emoji/ASCII, colores ANSI y timestamps localizados.
 - Metricas (`built`, `dispatched`, `filtered`, `transportErrors`) con callback en vivo.
 - Utilidades para normalizar mensajes, construir y lanzar errores y estilizar texto.
 - `AppLogger.reset()` para limpiar el estado singleton entre pruebas o reconfiguraciones.
+
+### Estado
+`@giodev/logger` esta en beta activa: los transportes/dispatchers funcionan, pero HTTP y archivo aun no ofrecen features empresariales (backoff, colas persistentes, rotacion/compresion) y el RFC 5424 sigue incompleto (sin structured data ni facilities). Habra cambios hasta completar la hoja de ruta.
 
 ### Estructura del Repositorio
 - `packages/logger`: codigo fuente, pruebas y build del paquete.
@@ -204,6 +213,9 @@ Activa con `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Contador
 - `npm run pack`: genera `giodev-logger-1.0.0.tgz`.
 
 ### Hoja de Ruta
-- Implementar `HttpTransport`.
 - Expandir cobertura de pruebas (transportes, dispatchers, formatos).
-- Revisar cumplimiento completo de RFC 5424 (structured data, facility codes).
+- Completar cumplimiento RFC 5424 (facility codes, structured data).
+- Robustecer `HttpTransport` (cola persistente, reintentos con backoff/jitter, helpers de autenticacion).
+- Hacer `TransportResolver` extensible con factories/presets (`http`, `memory`, modulos propios).
+- Enriquecer las metricas (contadores por nivel, histogramas de latencia, hooks Prometheus/OpenTelemetry).
+- Agregar rotacion/compresion/escritura asincronica a `FileTransport` y uploads opcionales a S3/Blob.
