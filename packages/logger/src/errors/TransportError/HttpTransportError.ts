@@ -26,3 +26,25 @@ export function requireEndpoint(boundary: Function | Object): never {
         )
     )
 }
+
+export function requireFetchImplementation(boundary: Function | Object): never {
+    return errorThrower(
+        boundary,
+        new HttpTransportError(
+            'You must provide a fetch implementation. Probably you are running in an unsupported environment.',
+            'FETCH_IMPLEMENTATION_REQUIRED',
+            2
+        )
+    )
+}
+
+export function requestError(boundary: Function | Object, status: number): never {
+    return errorThrower(
+        boundary,
+        new HttpTransportError(
+            `HttpTransport request failed with status ${status}`,
+            'HTTP_REQUEST_FAILED',
+            3
+        )
+    )
+}

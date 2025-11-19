@@ -1,6 +1,6 @@
 import { Log } from "@models/Log.type";
 import { LogTransport, TransportParams } from "./LogTransport";
-import { requireEndpoint } from "@errors/TransportError/HttpTransportError";
+import { requestError, requireEndpoint, requireFetchImplementation } from "@errors/TransportError/HttpTransportError";
 
 /**
  * Additional options accepted by {@link HttpTransport}.
@@ -61,7 +61,7 @@ export class HttpTransport extends LogTransport {
         this.retryOnFailure = Boolean(params.retryOnFailure);
 
         if (typeof fetch !== "function") {
-            throw new Error("HttpTransport requires a global fetch implementation");
+            requireFetchImplementation(this)
         }
     }
 
@@ -130,7 +130,7 @@ export class HttpTransport extends LogTransport {
             });
 
             if (!response.ok) {
-                throw new Error(`HttpTransport request failed with status ${response.status}`);
+                requestError(this, response.status);
             }
         } finally {
             clearTimeout(timer);
