@@ -1,17 +1,41 @@
-import { LogDispatcher } from "@core/Dispatcher/LogDispatcher";
-import { DISPATCHER_FACTORIES, DispatcherMode, normalizeDispatcher } from "@core/Dispatcher/DispatcherRegistry";
-import { ERROR_LEVEL_ENTRIES, ErrorLevelKey, INFO_LEVEL_ENTRIES, InfoLevelKey, Level } from "@models/Level.type";
-import { ContextLogger } from "@models/ContextLogger.type";
-import { Log } from "@models/Log.type";
-import { buildError, captureStack, ErrorBuilder, isErrorBuilder } from "@helpers/ErrorHandler";
-import { TransportParam, TransportResolver } from "@helpers/TransportResolver";
-import { normalizeMessage, resolveSubject } from "@utils/MessageNormalizer";
-import { LoggerMetrics, MetricsCollector, MetricsKey, MetricsOptions, MutableMetrics, ZERO_METRICS } from "@models/Metrics.type";
-import { OnUpdateCallbackError, requireInitialization, requireMetrics } from "@errors/LoggerError";
+import { LogDispatcher } from '@core/Dispatcher/LogDispatcher';
+import {
+    DISPATCHER_FACTORIES,
+    DispatcherMode,
+    normalizeDispatcher,
+} from '@core/Dispatcher/DispatcherRegistry';
+import {
+    ERROR_LEVEL_ENTRIES,
+    ErrorLevelKey,
+    INFO_LEVEL_ENTRIES,
+    InfoLevelKey,
+    Level,
+} from '@models/Level.type';
+import { ContextLogger } from '@models/ContextLogger.type';
+import { Log } from '@models/Log.type';
+import {
+    buildError,
+    captureStack,
+    ErrorBuilder,
+    isErrorBuilder,
+} from '@helpers/ErrorHandler';
+import { TransportParam, TransportResolver } from '@helpers/TransportResolver';
+import { normalizeMessage, resolveSubject } from '@utils/MessageNormalizer';
+import {
+    LoggerMetrics,
+    MetricsCollector,
+    MetricsKey,
+    MetricsOptions,
+    MutableMetrics,
+    ZERO_METRICS,
+} from '@models/Metrics.type';
+import {
+    OnUpdateCallbackError,
+    requireInitialization,
+    requireMetrics,
+} from '@errors/LoggerError';
 
-
-
-const DEFAULT_TRANSPORTS: TransportParam = ["console"];
+const DEFAULT_TRANSPORTS: TransportParam = ['console'];
 
 /**
  * Configuration options accepted by the {@link Logger} constructor.
@@ -30,8 +54,8 @@ type LoggerOptions = Readonly<{
 export class Logger {
     private readonly dispatcher: LogDispatcher;
     private readonly hasTransport: boolean;
-    private readonly isMetricsEnabled: boolean
-    private readonly callback: Function
+    private readonly isMetricsEnabled: boolean;
+    private readonly callback: Function;
     private readonly metricsState?: MutableMetrics;
     private readonly metricsCollector?: MetricsCollector;
 
@@ -43,26 +67,41 @@ export class Logger {
      */
     constructor(readonly options?: LoggerOptions) {
         const minLevel = options?.minLevel ?? Level.debug;
-        const transports = TransportResolver.resolve(options?.transports ?? DEFAULT_TRANSPORTS);
+        const transports = TransportResolver.resolve(
+            options?.transports ?? DEFAULT_TRANSPORTS,
+        );
 
         this.hasTransport = transports.length > 0;
 
         const metricsOptions = options?.metrics;
 
-        this.isMetricsEnabled = (typeof metricsOptions !== "boolean" && metricsOptions?.enabled || typeof metricsOptions === "boolean" && metricsOptions)
-        this.callback = typeof metricsOptions !== "boolean" ? metricsOptions?.onUpdate : undefined
+        this.isMetricsEnabled =
+            (typeof metricsOptions !== 'boolean' && metricsOptions?.enabled) ||
+            (typeof metricsOptions === 'boolean' && metricsOptions);
+        this.callback =
+            typeof metricsOptions !== 'boolean'
+                ? metricsOptions?.onUpdate
+                : undefined;
 
-        this.metricsState = { built: 0, dispatched: 0, filtered: 0, transportErrors: 0 };
+        this.metricsState = {
+            built: 0,
+            dispatched: 0,
+            filtered: 0,
+            transportErrors: 0,
+        };
         this.metricsCollector = {
-            recordBuilt: () => this.recordMetric("built"),
-            recordDispatched: () => this.recordMetric("dispatched"),
-            recordFiltered: () => this.recordMetric("filtered"),
-            recordTransportError: () => this.recordMetric("transportErrors"),
+            recordBuilt: () => this.recordMetric('built'),
+            recordDispatched: () => this.recordMetric('dispatched'),
+            recordFiltered: () => this.recordMetric('filtered'),
+            recordTransportError: () => this.recordMetric('transportErrors'),
         };
 
-
         const dispatcherKey = normalizeDispatcher(options?.dispatcher);
-        this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](transports, minLevel, this.metricsCollector);
+        this.dispatcher = DISPATCHER_FACTORIES[dispatcherKey](
+            transports,
+            minLevel,
+            this.metricsCollector,
+        );
     }
 
     /**
@@ -72,7 +111,7 @@ export class Logger {
         if (this.isMetricsEnabled) {
             return this.snapshotMetrics();
         }
-        requireMetrics(this)
+        requireMetrics(this);
     }
 
     /**
@@ -96,10 +135,22 @@ export class Logger {
         subject: string,
         builder: ErrorBuilder<E>,
         message?: unknown,
-        opt?: ErrorOptions
+        opt?: ErrorOptions,
     ): never;
-    emergency(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.emergency, subject, input, message, opt, Logger.prototype.emergency);
+    emergency(
+        subject: string,
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.handleErrorLevel(
+            Level.emergency,
+            subject,
+            input,
+            message,
+            opt,
+            Logger.prototype.emergency,
+        );
     }
 
     /**
@@ -107,9 +158,26 @@ export class Logger {
      */
     alert(subject: string, message: unknown): Log;
     alert(subject: string, error: Error): never;
-    alert<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    alert(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.alert, subject, input, message, opt, Logger.prototype.alert);
+    alert<E extends Error>(
+        subject: string,
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    alert(
+        subject: string,
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.handleErrorLevel(
+            Level.alert,
+            subject,
+            input,
+            message,
+            opt,
+            Logger.prototype.alert,
+        );
     }
 
     /**
@@ -121,10 +189,22 @@ export class Logger {
         subject: string,
         builder: ErrorBuilder<E>,
         message?: unknown,
-        opt?: ErrorOptions
+        opt?: ErrorOptions,
     ): never;
-    critical(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.critical, subject, input, message, opt, Logger.prototype.critical);
+    critical(
+        subject: string,
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.handleErrorLevel(
+            Level.critical,
+            subject,
+            input,
+            message,
+            opt,
+            Logger.prototype.critical,
+        );
     }
 
     /**
@@ -132,9 +212,26 @@ export class Logger {
      */
     error(subject: string, message: unknown): Log;
     error(subject: string, error: Error): never;
-    error<E extends Error>(subject: string, builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    error(subject: string, input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.handleErrorLevel(Level.error, subject, input, message, opt, Logger.prototype.error);
+    error<E extends Error>(
+        subject: string,
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    error(
+        subject: string,
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.handleErrorLevel(
+            Level.error,
+            subject,
+            input,
+            message,
+            opt,
+            Logger.prototype.error,
+        );
     }
 
     /**
@@ -173,9 +270,14 @@ export class Logger {
      * @returns Log object ready to emit.
      */
     private build(level: Level, subject: string, message: string): Log {
-        return { id: ++this.counterID, level, subject, message, timeStamp: Date.now() } as const;
+        return {
+            id: ++this.counterID,
+            level,
+            subject,
+            message,
+            timeStamp: Date.now(),
+        } as const;
     }
-
 
     /**
      * Build and dispatch a log entry when transports are configured.
@@ -201,10 +303,12 @@ export class Logger {
     private recordMetric(key: MetricsKey): void {
         if (!this.metricsState) return;
         this.metricsState[key] += 1;
-        const callback = this.callback
+        const callback = this.callback;
         try {
             if (callback) callback(this.snapshotMetrics());
-        } catch { OnUpdateCallbackError(this) }
+        } catch {
+            OnUpdateCallbackError(this);
+        }
     }
 
     /**
@@ -213,7 +317,8 @@ export class Logger {
      */
     private snapshotMetrics(): LoggerMetrics {
         if (!this.metricsState) return ZERO_METRICS;
-        const { built, dispatched, filtered, transportErrors } = this.metricsState;
+        const { built, dispatched, filtered, transportErrors } =
+            this.metricsState;
         return { built, dispatched, filtered, transportErrors };
     }
 
@@ -230,7 +335,8 @@ export class Logger {
         }
 
         for (const [name, level] of INFO_LEVEL_ENTRIES) {
-            context[name] = (message: unknown) => this.emit(level, subject, message);
+            context[name] = (message: unknown) =>
+                this.emit(level, subject, message);
         }
 
         context.metrics = () => this.metrics;
@@ -244,10 +350,23 @@ export class Logger {
      * @param subject Bound log subject.
      * @returns A function matching {@link ContextLogger.emergency} signature.
      */
-    private createErrorHandler(level: Level, subject: string): ContextLogger["emergency"] {
-        const handler = ((input: unknown, maybeMessage?: unknown, maybeOptions?: ErrorOptions) =>
-            this.handleErrorLevel(level, subject, input, maybeMessage, maybeOptions, handler)
-        ) as ContextLogger["emergency"];
+    private createErrorHandler(
+        level: Level,
+        subject: string,
+    ): ContextLogger['emergency'] {
+        const handler = ((
+            input: unknown,
+            maybeMessage?: unknown,
+            maybeOptions?: ErrorOptions,
+        ) =>
+            this.handleErrorLevel(
+                level,
+                subject,
+                input,
+                maybeMessage,
+                maybeOptions,
+                handler,
+            )) as ContextLogger['emergency'];
 
         return handler;
     }
@@ -269,7 +388,7 @@ export class Logger {
         input: unknown,
         message?: unknown,
         opt?: ErrorOptions,
-        stackContext?: Function
+        stackContext?: Function,
     ): Log | never {
         if (input instanceof Error) {
             captureStack(input, stackContext);
@@ -277,7 +396,8 @@ export class Logger {
         }
 
         if (isErrorBuilder(input)) {
-            const normalizedMessage = message === undefined ? undefined : normalizeMessage(message);
+            const normalizedMessage =
+                message === undefined ? undefined : normalizeMessage(message);
             const err = buildError(subject, input, normalizedMessage, opt);
             captureStack(err, stackContext);
             throw err;
@@ -285,7 +405,6 @@ export class Logger {
 
         return this.emit(level, subject, input);
     }
-
 }
 
 /**
@@ -316,7 +435,7 @@ export class AppLogger {
     static init(opts?: LoggerOptions) {
         this._options = opts;
         this._logger = new Logger(opts);
-        this._instance = this._logger.for("APP");
+        this._instance = this._logger.for('APP');
     }
 
     /**
@@ -335,7 +454,7 @@ export class AppLogger {
      */
     static get instance(): ContextLogger {
         if (this._instance) return this._instance;
-        return (this._instance = this.ensureLogger().for("APP"));
+        return (this._instance = this.ensureLogger().for('APP'));
     }
 
     /**
@@ -344,9 +463,17 @@ export class AppLogger {
      */
     static emergency(message: unknown): Log;
     static emergency(error: Error): never;
-    static emergency<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    static emergency(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.forwardErrorLevel("emergency", input, message, opt);
+    static emergency<E extends Error>(
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    static emergency(
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.forwardErrorLevel('emergency', input, message, opt);
     }
 
     /**
@@ -355,9 +482,17 @@ export class AppLogger {
      */
     static alert(message: unknown): Log;
     static alert(error: Error): never;
-    static alert<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    static alert(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.forwardErrorLevel("alert", input, message, opt);
+    static alert<E extends Error>(
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    static alert(
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.forwardErrorLevel('alert', input, message, opt);
     }
 
     /**
@@ -366,9 +501,17 @@ export class AppLogger {
      */
     static critical(message: unknown): Log;
     static critical(error: Error): never;
-    static critical<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    static critical(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.forwardErrorLevel("critical", input, message, opt);
+    static critical<E extends Error>(
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    static critical(
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.forwardErrorLevel('critical', input, message, opt);
     }
 
     /**
@@ -377,9 +520,17 @@ export class AppLogger {
      */
     static error(message: unknown): Log;
     static error(error: Error): never;
-    static error<E extends Error>(builder: ErrorBuilder<E>, message?: unknown, opt?: ErrorOptions): never;
-    static error(input: unknown, message?: unknown, opt?: ErrorOptions): Log | never {
-        return this.forwardErrorLevel("error", input, message, opt);
+    static error<E extends Error>(
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): never;
+    static error(
+        input: unknown,
+        message?: unknown,
+        opt?: ErrorOptions,
+    ): Log | never {
+        return this.forwardErrorLevel('error', input, message, opt);
     }
 
     /**
@@ -387,7 +538,7 @@ export class AppLogger {
      * @returns The created log.
      */
     static warn(message: unknown): Log {
-        return this.forwardLevel("warn", message);
+        return this.forwardLevel('warn', message);
     }
 
     /**
@@ -395,7 +546,7 @@ export class AppLogger {
      * @returns The created log.
      */
     static notice(message: unknown): Log {
-        return this.forwardLevel("notice", message);
+        return this.forwardLevel('notice', message);
     }
 
     /**
@@ -403,7 +554,7 @@ export class AppLogger {
      * @returns The created log.
      */
     static info(message: unknown): Log {
-        return this.forwardLevel("info", message);
+        return this.forwardLevel('info', message);
     }
 
     /**
@@ -411,7 +562,7 @@ export class AppLogger {
      * @returns The created log.
      */
     static debug(message: unknown): Log {
-        return this.forwardLevel("debug", message);
+        return this.forwardLevel('debug', message);
     }
 
     /**
@@ -430,7 +581,7 @@ export class AppLogger {
         key: ErrorLevelKey,
         input: unknown,
         message?: unknown,
-        opt?: ErrorOptions
+        opt?: ErrorOptions,
     ): Log | never {
         const handler = this.instance[key] as ContextLogger[ErrorLevelKey];
         return (handler as any)(input, message, opt);
@@ -453,7 +604,7 @@ export class AppLogger {
         if (this._logger) return this._logger;
         if (!this._options) requireInitialization(this);
         this._logger = new Logger(this._options);
-        this._instance = this._logger.for("APP");
+        this._instance = this._logger.for('APP');
         return this._logger;
     }
 }

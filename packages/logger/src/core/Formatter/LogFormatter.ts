@@ -1,4 +1,4 @@
-import { Log } from "@models/Log.type";
+import { Log } from '@models/Log.type';
 
 /**
  * Contract implemented by components that transform logs into displayable strings.

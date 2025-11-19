@@ -1,7 +1,6 @@
-import { ErrorBuilder } from "@helpers/ErrorHandler";
-import { LoggerMetrics } from "./Metrics.type";
-import { Log } from "./Log.type";
-
+import { ErrorBuilder } from '@helpers/ErrorHandler';
+import { LoggerMetrics } from './Metrics.type';
+import { Log } from './Log.type';
 
 /**
  * Signature for simple log-level helpers that accept arbitrary messages.
@@ -13,7 +12,11 @@ export type LevelFn = (message: unknown) => Log;
  */
 export type ErrorLevelFn = LevelFn & {
     (error: Error): never;
-    <E extends Error>(builder: ErrorBuilder<E>, message?: unknown, options?: ErrorOptions): never;
+    <E extends Error>(
+        builder: ErrorBuilder<E>,
+        message?: unknown,
+        options?: ErrorOptions,
+    ): never;
 };
 
 /**

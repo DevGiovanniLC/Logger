@@ -2,7 +2,10 @@
  * Constructor signature for custom {@link Error} subtypes that can be built on demand.
  * Accepts the standard message and {@link ErrorOptions} parameters available in modern runtimes.
  */
-export type ErrorBuilder<E extends Error = Error> = new (message?: string, options?: ErrorOptions) => E;
+export type ErrorBuilder<E extends Error = Error> = new (
+    message?: string,
+    options?: ErrorOptions,
+) => E;
 
 /**
  * Normalize error inputs by returning existing {@link Error} instances or instantiating a custom one.
@@ -16,10 +19,13 @@ export function buildError<E extends Error>(
     subject: string,
     input: Error | ErrorBuilder<E>,
     message?: string,
-    options?: ErrorOptions
+    options?: ErrorOptions,
 ): Error {
     if (input instanceof Error) return input;
-    return new input(`(${subject}) ${message ? `- ${message}` : ''}`.trim(), options);
+    return new input(
+        `(${subject}) ${message ? `- ${message}` : ''}`.trim(),
+        options,
+    );
 }
 
 /**
@@ -28,10 +34,13 @@ export function buildError<E extends Error>(
  * @returns `true` when the value matches the {@link ErrorBuilder} contract.
  */
 export function isErrorBuilder(value: unknown): value is ErrorBuilder {
-    if (typeof value !== "function") return false;
+    if (typeof value !== 'function') return false;
     const prototype = value.prototype;
     if (!prototype) return false;
-    return prototype === Error.prototype || Error.prototype.isPrototypeOf(prototype);
+    return (
+        prototype === Error.prototype ||
+        Error.prototype.isPrototypeOf(prototype)
+    );
 }
 
 /**

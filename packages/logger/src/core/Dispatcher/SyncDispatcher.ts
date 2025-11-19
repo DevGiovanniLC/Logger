@@ -1,8 +1,8 @@
-import { LogTransport } from "@core/Transport/LogTransport";
-import { LogDispatcher } from "./LogDispatcher";
-import { Level } from "@models/Level.type";
-import { Log } from "@models/Log.type";
-import { MetricsCollector } from "@models/Metrics.type";
+import { LogTransport } from '@core/Transport/LogTransport';
+import { LogDispatcher } from './LogDispatcher';
+import { Level } from '@models/Level.type';
+import { Log } from '@models/Log.type';
+import { MetricsCollector } from '@models/Metrics.type';
 
 /**
  * Synchronous log dispatcher.
@@ -25,7 +25,7 @@ export class SyncDispatcher extends LogDispatcher {
     constructor(
         transports: LogTransport[],
         minLevel: Level = Level.debug,
-        metrics?: MetricsCollector
+        metrics?: MetricsCollector,
     ) {
         super(transports, minLevel, metrics);
     }

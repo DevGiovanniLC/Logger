@@ -1,7 +1,7 @@
-import { LogTransport } from "@core/Transport/LogTransport";
-import { Level } from "@models/Level.type";
-import { Log } from "@models/Log.type";
-import { MetricsCollector } from "@models/Metrics.type";
+import { LogTransport } from '@core/Transport/LogTransport';
+import { Level } from '@models/Level.type';
+import { Log } from '@models/Log.type';
+import { MetricsCollector } from '@models/Metrics.type';
 
 /**
  * Base class implemented by log dispatchers responsible for delivering records to transports.
@@ -15,7 +15,7 @@ export abstract class LogDispatcher {
     protected constructor(
         transports: LogTransport[],
         protected readonly minLevel: Level,
-        protected readonly metrics?: MetricsCollector
+        protected readonly metrics?: MetricsCollector,
     ) {
         this.transports = transports.slice();
     }

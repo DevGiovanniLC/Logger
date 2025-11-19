@@ -5,7 +5,10 @@ type LevelIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 /**
  * Create a color function based on a single ANSI code.
  */
-const wrap = (code: number): ColorFn => (text: string) => `\x1b[${code}m${text}\x1b[0m`;
+const wrap =
+    (code: number): ColorFn =>
+    (text: string) =>
+        `\x1b[${code}m${text}\x1b[0m`;
 
 /**
  * Collection of ANSI styling helpers keyed by descriptive names.
@@ -82,4 +85,6 @@ const levelColorObject: LevelColorMap = {
 /**
  * Frozen map that relates log levels to friendly colorizers.
  */
-export const LevelColor: LevelColorMap = Object.freeze(levelColorObject) as LevelColorMap;
+export const LevelColor: LevelColorMap = Object.freeze(
+    levelColorObject,
+) as LevelColorMap;

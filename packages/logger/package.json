@@ -26,7 +26,8 @@
     "scripts": {
         "build": "tsup",
         "clean": "rimraf dist",
-        "test": "vitest"
+        "test": "vitest",
+        "format": "prettier --write \"src/**/*.{ts,html,css,scss,json}\""
     },
     "files": [
         "dist"

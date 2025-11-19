@@ -1,7 +1,7 @@
-import { LogTransport, TransportParams } from "./LogTransport"
-import { Log } from "@models/Log.type"
-import { Level } from "@models/Level.type"
-import { requireConsole } from "@errors/TransportError/ConsoleTransportError"
+import { LogTransport, TransportParams } from './LogTransport';
+import { Log } from '@models/Log.type';
+import { Level } from '@models/Level.type';
+import { requireConsole } from '@errors/TransportError/ConsoleTransportError';
 
 /**
  * Transport that writes formatted logs to the host console.
@@ -13,17 +13,21 @@ export class ConsoleTransport extends LogTransport {
      * Create a console transport.
      * @param consoleTransportOptions Optional custom formatter or formatter options.
      */
-    constructor(consoleTransportOptions?: TransportParams
-    ) {
-        const globalConsole = (typeof console !== "undefined" ? console : undefined) as Console | undefined;
+    constructor(consoleTransportOptions?: TransportParams) {
+        const globalConsole = (
+            typeof console !== 'undefined' ? console : undefined
+        ) as Console | undefined;
         const missingMethods =
-            typeof globalConsole === "object"
-                ? (["error", "warn", "info", "debug"] as const).filter((method) => typeof (globalConsole as any)[method] !== "function")
-                : ["error", "warn", "info", "debug"];
+            typeof globalConsole === 'object'
+                ? (['error', 'warn', 'info', 'debug'] as const).filter(
+                      (method) =>
+                          typeof (globalConsole as any)[method] !== 'function',
+                  )
+                : ['error', 'warn', 'info', 'debug'];
         if (!globalConsole || missingMethods.length > 0) {
             requireConsole(ConsoleTransport, missingMethods);
         }
-        super("console", consoleTransportOptions);
+        super('console', consoleTransportOptions);
         this.targetConsole = globalConsole;
     }
 

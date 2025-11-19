@@ -1,6 +1,11 @@
-import { Log } from "@models/Log.type";
-import { LogTransport, TransportParams } from "./LogTransport";
-import { networkFailure, requestError, requireEndpoint, requireFetchImplementation } from "@errors/TransportError/HttpTransportError";
+import { Log } from '@models/Log.type';
+import { LogTransport, TransportParams } from './LogTransport';
+import {
+    networkFailure,
+    requestError,
+    requireEndpoint,
+    requireFetchImplementation,
+} from '@errors/TransportError/HttpTransportError';
 
 /**
  * Additional options accepted by {@link HttpTransport}.
@@ -22,7 +27,7 @@ export type HttpTransportParams = TransportParams & {
      * When true, failed requests keep the payload in the queue for a later retry.
      */
     retryOnFailure?: boolean;
-}
+};
 
 type PendingPayload = {
     /**
@@ -33,7 +38,7 @@ type PendingPayload = {
      * Raw log entry, useful for debugging errors.
      */
     log: Log;
-}
+};
 
 /**
  * Transport that POSTs each formatted log entry to a remote HTTP endpoint.
@@ -51,17 +56,17 @@ export class HttpTransport extends LogTransport {
     private flushing = false;
 
     constructor(params: HttpTransportParams) {
-        super("http", params);
+        super('http', params);
         if (!params?.endpoint) {
-            requireEndpoint(this)
+            requireEndpoint(this);
         }
         this.endpoint = params.endpoint;
         this.headers = params.headers ?? {};
         this.timeoutMs = params.timeoutMs ?? 5000;
         this.retryOnFailure = Boolean(params.retryOnFailure);
 
-        if (typeof fetch !== "function") {
-            requireFetchImplementation(this)
+        if (typeof fetch !== 'function') {
+            requireFetchImplementation(this);
         }
     }
 
@@ -98,7 +103,12 @@ export class HttpTransport extends LogTransport {
                     if (!this.retryOnFailure) {
                         this.queue.shift();
                     }
-                    console.error("HttpTransport error:", error, "log:", payload.log);
+                    console.error(
+                        'HttpTransport error:',
+                        error,
+                        'log:',
+                        payload.log,
+                    );
                     break;
                 }
             }
@@ -120,9 +130,9 @@ export class HttpTransport extends LogTransport {
 
         try {
             const response = await fetch(this.endpoint, {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "content-type": "application/json",
+                    'content-type': 'application/json',
                     ...this.headers,
                 },
                 body,

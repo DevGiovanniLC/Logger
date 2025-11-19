@@ -1,4 +1,8 @@
-export type MetricsKey = "built" | "dispatched" | "filtered" | "transportErrors";
+export type MetricsKey =
+    | 'built'
+    | 'dispatched'
+    | 'filtered'
+    | 'transportErrors';
 
 /** Snapshot of counters collected by a logger instance. */
 export type LoggerMetrics = Readonly<Record<MetricsKey, number>>;

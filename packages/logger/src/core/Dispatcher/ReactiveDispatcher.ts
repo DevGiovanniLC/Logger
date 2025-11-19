@@ -1,10 +1,10 @@
-import { Log } from "@models/Log.type";
-import { LogDispatcher } from "./LogDispatcher";
-import { Level } from "@models/Level.type";
-import { LogTransport } from "@core/Transport/LogTransport";
-import { MetricsCollector } from "@models/Metrics.type";
+import { Log } from '@models/Log.type';
+import { LogDispatcher } from './LogDispatcher';
+import { Level } from '@models/Level.type';
+import { LogTransport } from '@core/Transport/LogTransport';
+import { MetricsCollector } from '@models/Metrics.type';
 
-const isNode = typeof process !== "undefined" && !!process.versions?.node;
+const isNode = typeof process !== 'undefined' && !!process.versions?.node;
 
 /**
  * Options for {@link ReactiveDispatcher}.
@@ -133,7 +133,7 @@ export class ReactiveDispatcher extends LogDispatcher {
         transports: LogTransport[],
         minLevel: Level = Level.debug,
         opts?: Opts,
-        metrics?: MetricsCollector
+        metrics?: MetricsCollector,
     ) {
         super(transports, minLevel, metrics);
         this.flushInterval = opts?.intervalMs ?? 50;
@@ -141,17 +141,24 @@ export class ReactiveDispatcher extends LogDispatcher {
         this.unrefTimers = opts?.unrefTimers ?? true;
 
         const preferChannel =
-            (opts?.useMessageChannel ?? (!isNode && typeof MessageChannel !== "undefined")) &&
-            typeof MessageChannel !== "undefined";
+            (opts?.useMessageChannel ??
+                (!isNode && typeof MessageChannel !== 'undefined')) &&
+            typeof MessageChannel !== 'undefined';
 
-        this.schedule = preferChannel ? this.createChannelScheduler() : this.createTimerScheduler();
+        this.schedule = preferChannel
+            ? this.createChannelScheduler()
+            : this.createTimerScheduler();
 
-        if (isNode && typeof process?.on === "function" && (opts?.hookBeforeExit ?? true)) {
+        if (
+            isNode &&
+            typeof process?.on === 'function' &&
+            (opts?.hookBeforeExit ?? true)
+        ) {
             this.beforeExitHandler = () => {
                 this.flush();
                 this.dispose();
             };
-            process.on("beforeExit", this.beforeExitHandler);
+            process.on('beforeExit', this.beforeExitHandler);
         }
     }
 
@@ -232,10 +239,10 @@ export class ReactiveDispatcher extends LogDispatcher {
         }
 
         if (isNode && this.beforeExitHandler) {
-            if (typeof process?.off === "function") {
-                process.off("beforeExit", this.beforeExitHandler);
-            } else if (typeof process?.removeListener === "function") {
-                process.removeListener("beforeExit", this.beforeExitHandler);
+            if (typeof process?.off === 'function') {
+                process.off('beforeExit', this.beforeExitHandler);
+            } else if (typeof process?.removeListener === 'function') {
+                process.removeListener('beforeExit', this.beforeExitHandler);
             }
             this.beforeExitHandler = undefined;
         }
@@ -289,6 +296,6 @@ export class ReactiveDispatcher extends LogDispatcher {
     private maybeUnref(timer?: ReturnType<typeof setTimeout>): void {
         if (!isNode || !this.unrefTimers || !timer) return;
         const unref = (timer as any).unref;
-        if (typeof unref === "function") unref.call(timer);
+        if (typeof unref === 'function') unref.call(timer);
     }
 }
