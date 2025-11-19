@@ -2,7 +2,7 @@ import { Log } from "@models/Log.type";
 import { LogTransport, TransportParams } from "./LogTransport";
 import fs from "fs";
 import * as path from "path";
-import { requireFileSystem } from "@errors/TransportError/FileTransportError";
+import { directorySetupFailed, fileWriteFailed, requireFileSystem } from "@errors/TransportError/FileTransportError";
 
 const isNode = typeof process !== "undefined" && !!process.versions?.node;
 
@@ -26,7 +26,9 @@ export class FileTransport extends LogTransport {
     protected filePath: string;
 
     constructor(transportParams?: FileTransportParams) {
-
+        if (!isNode) {
+            requireFileSystem(FileTransport);
+        }
         if (typeof transportParams == 'string') {
             super('file')
             this.setup(transportParams)
@@ -35,10 +37,6 @@ export class FileTransport extends LogTransport {
 
         super('file', transportParams)
         this.setup(transportParams?.filePath)
-
-        if (!isNode) {
-            requireFileSystem(this)
-        }
     }
 
     /**
@@ -70,7 +68,11 @@ export class FileTransport extends LogTransport {
      * Create the directory tree on demand.
      */
     private ensureDirectory(targetDir: string) {
-        fs.mkdirSync(targetDir, { recursive: true })
+        try {
+            fs.mkdirSync(targetDir, { recursive: true })
+        } catch (error) {
+            directorySetupFailed(this, targetDir, error)
+        }
     }
 
     /**
@@ -78,7 +80,11 @@ export class FileTransport extends LogTransport {
      * Throws if the write fails so callers notice transport errors instantly.
      */
     private appendLine(chunk: string) {
-        fs.appendFileSync(this.filePath, chunk)
+        try {
+            fs.appendFileSync(this.filePath, chunk)
+        } catch (error) {
+            fileWriteFailed(this, this.filePath, error)
+        }
     }
 
     /**
