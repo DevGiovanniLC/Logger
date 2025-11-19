@@ -73,4 +73,14 @@ describe("ConsoleTransport", () => {
         transport.emit(buildLog(Level.warning));
         expect(warnSpy).toHaveBeenCalledTimes(1);
     });
+
+    it("should throw when the runtime console is missing required methods", () => {
+        const originalConsole = globalThis.console;
+        // @ts-expect-error - simulate incomplete console implementation
+        globalThis.console = { warn: () => undefined, info: () => undefined, debug: () => undefined } as Console;
+
+        expect(() => new ConsoleTransport({ formatter })).toThrow("ConsoleTransport requires a console implementation");
+
+        globalThis.console = originalConsole;
+    });
 });

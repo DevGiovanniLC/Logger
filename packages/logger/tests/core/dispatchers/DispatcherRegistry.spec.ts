@@ -31,6 +31,10 @@ describe("DispatcherRegistry", () => {
         );
     });
 
+    it("should accept mixed-case dispatcher identifiers", () => {
+        expect(normalizeDispatcher("ReAcTiVe" as any)).toBe("reactive");
+    });
+
     it("should expose runtime guards for dispatcher keys", () => {
         expect(isDispatcherKey("sync")).toBe(true);
         expect(isDispatcherKey("reactive")).toBe(true);

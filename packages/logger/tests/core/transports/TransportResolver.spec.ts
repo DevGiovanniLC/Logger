@@ -35,4 +35,11 @@ describe("TransportResolver", () => {
 
         expect(resolved).toEqual([]);
     });
+
+    it("should ignore unsupported entries inside mixed arrays without affecting valid modes", () => {
+        const resolved = TransportResolver.resolve(["console", "invalid-mode" as any]);
+
+        expect(resolved).toHaveLength(1);
+        expect(resolved[0]).toBeInstanceOf(ConsoleTransport);
+    });
 });

@@ -46,4 +46,16 @@ describe("MemoryTransport", () => {
         expect(snapshot).toHaveLength(2);
         expect(transport.logs).toHaveLength(1);
     });
+
+    it("should honor enable/disable toggles inherited from LogTransport", () => {
+        const transport = new MemoryTransport({ formatter });
+
+        transport.disable();
+        transport.emit(buildLog(1, "first"));
+        expect(transport.logs).toHaveLength(0);
+
+        transport.enable();
+        transport.emit(buildLog(2, "second"));
+        expect(transport.logs).toHaveLength(1);
+    });
 });

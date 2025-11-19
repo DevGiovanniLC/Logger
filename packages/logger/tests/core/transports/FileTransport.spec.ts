@@ -76,4 +76,14 @@ describe("FileTransport", () => {
 
         expect(appendSpy).not.toHaveBeenCalled();
     });
+
+    it("should reuse the same file path across multiple writes", () => {
+        const transport = new FileTransport({ formatter });
+
+        transport.emit(sampleLog);
+        transport.emit({ ...sampleLog, id: 2 });
+
+        const paths = appendSpy.mock.calls.map(([target]) => target);
+        expect(new Set(paths).size).toBe(1);
+    });
 });

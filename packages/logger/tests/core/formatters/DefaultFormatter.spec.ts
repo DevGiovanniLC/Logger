@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { DefaultFormatter } from "@core/Formatter/DefaultFormatter";
 import { Level } from "@models/Level.type";
 import { Log } from "@models/Log.type";
+import { FormatterError } from "@errors/FormatterError/FormatterError";
 
 const baseLog = (overrides: Partial<Log> = {}): Log => ({
     id: overrides.id ?? 42,
@@ -43,5 +44,17 @@ describe("DefaultFormatter", () => {
         const output = formatter.format(log);
 
         expect(output).toContain(expectedDate);
+    });
+
+    it("should throw a FormatterError when Intl.DateTimeFormat initialization fails", () => {
+        const original = Intl.DateTimeFormat;
+        // @ts-expect-error - force constructor replacement to simulate unsupported environment
+        Intl.DateTimeFormat = vi.fn(() => {
+            throw new Error("unsupported");
+        }) as unknown as typeof Intl.DateTimeFormat;
+
+        expect(() => new DefaultFormatter()).toThrow(FormatterError);
+
+        Intl.DateTimeFormat = original;
     });
 });

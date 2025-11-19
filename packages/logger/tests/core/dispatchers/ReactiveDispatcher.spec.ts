@@ -95,4 +95,25 @@ describe("ReactiveDispatcher", () => {
         expect(transport.emitted).toHaveLength(0);
         expect(metrics.recordFiltered).toHaveBeenCalledTimes(1);
     });
+
+    it("should dispose after inactivity and ignore subsequent dispatches", () => {
+        vi.useFakeTimers();
+
+        const transport = new StubTransport();
+        const dispatcher = new ReactiveDispatcher(
+            [transport],
+            Level.debug,
+            { intervalMs: 10, idleMs: 20, useMessageChannel: false, hookBeforeExit: false }
+        );
+
+        dispatcher.dispatch(createLog(Level.debug, 10));
+        vi.advanceTimersByTime(10);
+        expect(transport.emitted).toHaveLength(1);
+
+        vi.advanceTimersByTime(20);
+        dispatcher.dispatch(createLog(Level.debug, 11));
+        vi.advanceTimersByTime(10);
+
+        expect(transport.emitted).toHaveLength(1);
+    });
 });

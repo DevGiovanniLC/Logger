@@ -15,19 +15,22 @@ const makeLog = (id = 1): Log => ({
     level: Level.error,
     subject: "Http",
     message: "payload",
-    timeStamp: 1700000000000,
+    timeStamp: 1_700_000_000_000,
 });
 
 describe("HttpTransport", () => {
     let originalFetch: typeof fetch | undefined;
+    let consoleErrorSpy: any;
 
     beforeEach(() => {
         originalFetch = globalThis.fetch;
         globalThis.fetch = vi.fn();
+        consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     });
 
     afterEach(() => {
         globalThis.fetch = originalFetch as typeof fetch;
+        consoleErrorSpy.mockRestore();
         vi.restoreAllMocks();
     });
 
@@ -80,24 +83,36 @@ describe("HttpTransport", () => {
         fetchMock.mockRejectedValue(new TypeError("boom"));
         const transport = buildTransport({ retryOnFailure: false });
 
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-        const queue = (transport as unknown as { queue: Array<{ body: string; log: Log }> }).queue;
-        queue.push({ body: JSON.stringify({ log: makeLog(1) }), log: makeLog(1) });
+        const queue = (transport as unknown as { queue: Array<{ body: string; log: Log; attempts: number }> }).queue;
+        queue.push({ body: JSON.stringify({ log: makeLog(1) }), log: makeLog(1), attempts: 0 });
         (transport as unknown as { flushQueue: () => void }).flushQueue();
         await vi.waitUntil(() => queue.length === 0);
 
         expect(queue).toHaveLength(0);
-        expect(consoleSpy).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
     it("should keep payloads when retryOnFailure is true", async () => {
         const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
         fetchMock.mockRejectedValue(new TypeError("boom"));
         const transport = buildTransport({ retryOnFailure: true });
-        const queue = (transport as unknown as { queue: Array<{ body: string; log: Log }> }).queue;
-        queue.push({ body: JSON.stringify({ log: makeLog(2) }), log: makeLog(2) });
+        const queue = (transport as unknown as { queue: Array<{ body: string; log: Log; attempts: number }> }).queue;
+        queue.push({ body: JSON.stringify({ log: makeLog(2) }), log: makeLog(2), attempts: 0 });
         (transport as unknown as { flushQueue: () => void }).flushQueue();
         await vi.waitUntil(() => queue.length === 1);
+    });
+
+    it("should stop retrying after reaching maxAttempts", async () => {
+        const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+        fetchMock.mockRejectedValue(new TypeError("boom"));
+        const transport = buildTransport({ retryOnFailure: true, maxAttempts: 2 });
+        const queue = (transport as unknown as { queue: Array<{ body: string; log: Log; attempts: number }> }).queue;
+        queue.push({ body: JSON.stringify({ log: makeLog(3) }), log: makeLog(3), attempts: 0 });
+
+        (transport as unknown as { flushQueue: () => void }).flushQueue();
+
+        await vi.waitUntil(() => queue.length === 0);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it("should reuse provided headers when posting", async () => {
@@ -115,5 +130,18 @@ describe("HttpTransport", () => {
                 headers: expect.objectContaining({ Authorization: "Bearer token" }),
             })
         );
+    });
+
+    it("should flush queued payloads sequentially when emit is invoked multiple times", async () => {
+        const transport = buildTransport();
+        const postSpy = vi.spyOn(transport as any, "post").mockResolvedValue(undefined);
+
+        transport.emit(makeLog(5));
+        transport.emit(makeLog(6));
+
+        await vi.waitUntil(() => postSpy.mock.calls.length === 2);
+
+        expect(postSpy.mock.calls[0]?.[0]).toContain("\"formatted\"");
+        expect(postSpy.mock.calls[1]?.[0]).toContain("\"log\"");
     });
 });

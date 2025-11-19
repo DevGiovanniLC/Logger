@@ -27,6 +27,11 @@ export type HttpTransportParams = TransportParams & {
      * When true, failed requests keep the payload in the queue for a later retry.
      */
     retryOnFailure?: boolean;
+    /**
+     * Maximum number of retry attempts for a payload when {@link retryOnFailure} is true.
+     * When omitted, payloads are retried indefinitely.
+     */
+    maxAttempts?: number;
 };
 
 type PendingPayload = {
@@ -38,6 +43,10 @@ type PendingPayload = {
      * Raw log entry, useful for debugging errors.
      */
     log: Log;
+    /**
+     * Number of failed attempts that have occurred for this payload.
+     */
+    attempts: number;
 };
 
 /**
@@ -51,6 +60,7 @@ export class HttpTransport extends LogTransport {
     private readonly headers: Record<string, string>;
     private readonly timeoutMs: number;
     private readonly retryOnFailure: boolean;
+    private readonly maxAttempts?: number;
 
     private readonly queue: PendingPayload[] = [];
     private flushing = false;
@@ -69,6 +79,10 @@ export class HttpTransport extends LogTransport {
         this.headers = params.headers ?? {};
         this.timeoutMs = params.timeoutMs ?? 5000;
         this.retryOnFailure = Boolean(params.retryOnFailure);
+        this.maxAttempts =
+            typeof params.maxAttempts === 'number' && params.maxAttempts > 0
+                ? Math.floor(params.maxAttempts)
+                : 1;
 
         if (typeof fetch !== 'function') {
             requireFetchImplementation(this);
@@ -85,6 +99,7 @@ export class HttpTransport extends LogTransport {
                 log,
             }),
             log,
+            attempts: 0,
         };
 
         this.queue.push(payload);
@@ -105,7 +120,14 @@ export class HttpTransport extends LogTransport {
                     await this.post(payload.body);
                     this.queue.shift();
                 } catch (error) {
+                    payload.attempts += 1;
+                    const canRetry =
+                        this.retryOnFailure &&
+                        (this.maxAttempts === undefined ||
+                            payload.attempts < this.maxAttempts);
                     if (!this.retryOnFailure) {
+                        this.queue.shift();
+                    } else if (!canRetry) {
                         this.queue.shift();
                     }
                     console.error(

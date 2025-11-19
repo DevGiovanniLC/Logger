@@ -92,6 +92,13 @@ describe("AppLogger", () => {
             );
         });
 
+        it("should default contextual subjects to \"Unknown\" when no name can be derived", () => {
+            const scoped = AppLogger.for(Object.create(null));
+            const log = scoped.notice("anonymous");
+
+            expect(log.subject).toBe("Unknown");
+        });
+
         it("should emit emergency logs when invoked with plain messages", () => {
             const log = AppLogger.emergency("panic");
 

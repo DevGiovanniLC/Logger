@@ -66,4 +66,13 @@ describe("SyncDispatcher", () => {
         expect(() => dispatcher.dispatch(buildLog(Level.debug))).not.toThrow();
         expect(metrics.recordTransportError).toHaveBeenCalledTimes(1);
     });
+
+    it("should silently skip dispatch when no transports are configured", () => {
+        const metrics = metricsCollector();
+        const dispatcher = new SyncDispatcher([], Level.debug, metrics);
+
+        dispatcher.dispatch(buildLog(Level.debug));
+
+        expect(metrics.recordDispatched).not.toHaveBeenCalled();
+    });
 });

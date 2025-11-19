@@ -1,6 +1,7 @@
 import { INFO_LEVEL_ENTRIES, Level } from "@models/Level.type.js";
 import { Log } from "@models/Log.type";
 import { Logger } from "../src/Logger";
+import { LoggerError } from "@errors/LoggerError";
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { ConsoleTransport, MemoryTransport } from "@core/Transport";
@@ -124,6 +125,12 @@ describe("Logger", () => {
                 filtered: 0,
                 transportErrors: 0,
             });
+        });
+
+        it("should throw LoggerError when metrics are accessed without enabling them", () => {
+            const logger = new Logger({ transports: [] });
+
+            expect(() => logger.metrics).toThrow(LoggerError);
         });
 
         it("should increment log identifiers sequentially even without transports", () => {
