@@ -4,6 +4,7 @@ import { MetricsCollector } from "@models/Metrics.type";
 import { LogDispatcher } from "./LogDispatcher";
 import { SyncDispatcher } from "./SyncDispatcher";
 import { ReactiveDispatcher } from "./ReactiveDispatcher";
+import { UnexpectedDispatcher } from "@errors/DispatcherError/DispatcherError";
 
 /**
  * Built-in modes supported by the dispatcher resolver.
@@ -46,5 +47,5 @@ export const normalizeDispatcher = (mode?: DispatcherMode): DispatcherKey => {
     const raw = mode ?? "sync";
     const normalized = raw.toString().toLowerCase();
     if (isDispatcherKey(normalized)) return normalized;
-    throw new Error(`Unsupported dispatcher mode "${raw}". Expected "sync" or "reactive".`);
+    UnexpectedDispatcher(this);
 };

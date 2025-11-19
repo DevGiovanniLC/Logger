@@ -19,6 +19,10 @@ export class HttpTransportError extends InternalError {
 export function requireEndpoint(boundary: Function | Object): never {
     return errorThrower(
         boundary,
-        new HttpTransportError('You must provide an endpoint.', 'ENDPOINT_REQUIRED', 1)
+        new HttpTransportError(
+            'You must provide an endpoint.',
+            'ENDPOINT_REQUIRED',
+            1
+        )
     )
 }
