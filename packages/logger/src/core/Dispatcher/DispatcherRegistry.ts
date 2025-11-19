@@ -47,5 +47,5 @@ export const normalizeDispatcher = (mode?: DispatcherMode): DispatcherKey => {
     const raw = mode ?? "sync";
     const normalized = raw.toString().toLowerCase();
     if (isDispatcherKey(normalized)) return normalized;
-    UnexpectedDispatcher(this);
+    UnexpectedDispatcher(this, raw);
 };

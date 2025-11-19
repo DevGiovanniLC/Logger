@@ -16,11 +16,11 @@ export class DispatcherError extends InternalError {
 }
 
 
-export function UnexpectedDispatcher(boundary: Function | Object): never {
+export function UnexpectedDispatcher(boundary: Function | Object | undefined, raw: string): never {
     return errorThrower(
         boundary,
         new DispatcherError(
-            'Unsupported dispatcher mode "${raw}". Expected "sync" or "reactive".',
+            `Unsupported dispatcher mode "${raw}". Expected "sync" or "reactive".`,
             'DISPATCHER_UNEXPECTED',
             1
         )

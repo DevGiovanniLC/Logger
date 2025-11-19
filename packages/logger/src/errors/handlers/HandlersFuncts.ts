@@ -1,8 +1,8 @@
 import { InternalError } from "@errors/InternalError"
 
 
-export function errorThrower(boundary: Function | Object, error: InternalError): never {
-    const proto = Object.getPrototypeOf(boundary)
+export function errorThrower(boundary: Function | Object | undefined, error: InternalError): never {
+    const proto = Object.getPrototypeOf(boundary ?? {})
     const getterFn = Object.getOwnPropertyDescriptor(proto, 'metrics')?.get
     // Excluir el getter del stack para que apunte al caller
     if (getterFn && Error.captureStackTrace) {
