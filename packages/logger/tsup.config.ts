@@ -4,6 +4,7 @@ export default defineConfig({
     entry: {
         index: 'src/index.ts',
         'Transport/index': 'src/core/Transport/index.ts',
+        'Transport/node': 'src/core/Transport/node.ts',
         'Formatter/index': 'src/core/Formatter/index.ts'
     },
     format: ['esm', 'cjs'],

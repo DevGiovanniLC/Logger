@@ -1,4 +1,3 @@
-import { FileTransport } from '@core/Transport';
 import { ConsoleTransport } from '@core/Transport/ConsoleTransport';
 import { LogTransport, TransportMode } from '@core/Transport/LogTransport';
 
@@ -11,7 +10,7 @@ export type TransportParam =
     | TransportMode;
 
 const MODE_FACTORIES: Record<TransportMode, () => LogTransport> = {
-    console: () => new ConsoleTransport(),
+    'console': () => new ConsoleTransport(),
     'console-emoji': () =>
         new ConsoleTransport({ defaultFormaterOptions: { withEmojis: true } }),
     'console-color': () =>
@@ -20,7 +19,6 @@ const MODE_FACTORIES: Record<TransportMode, () => LogTransport> = {
         new ConsoleTransport({
             defaultFormaterOptions: { color: true, withEmojis: true },
         }),
-    file: () => new FileTransport(),
 };
 
 /**

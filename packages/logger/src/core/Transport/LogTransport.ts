@@ -88,4 +88,3 @@ export type TransportMode =
     | 'console-emoji'
     | 'console-color'
     | 'console-styled'
-    | 'file';

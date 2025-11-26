@@ -17,6 +17,11 @@
             "import": "./dist/Transport/index.mjs",
             "require": "./dist/Transport/index.cjs"
         },
+        "./Transport/node": {
+            "types": "./dist/Transport/node.d.ts",
+            "import": "./dist/Transport/node.mjs",
+            "require": "./dist/Transport/node.cjs"
+        },
         "./Formatter": {
             "types": "./dist/Formatter/index.d.ts",
             "import": "./dist/Formatter/index.mjs",
