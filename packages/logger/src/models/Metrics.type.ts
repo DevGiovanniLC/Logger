@@ -2,7 +2,8 @@ export type MetricsKey =
     | 'built'
     | 'dispatched'
     | 'filtered'
-    | 'transportErrors';
+    | 'transportErrors'
+    | 'thrownErrors';
 
 /** Snapshot of counters collected by a logger instance. */
 export type LoggerMetrics = Readonly<Record<MetricsKey, number>>;
@@ -13,6 +14,7 @@ export type MetricsCollector = {
     recordDispatched(): void;
     recordFiltered(): void;
     recordTransportError(): void;
+    recordThrown(): void;
 };
 
 /** Configuration for enabling metrics and receiving update notifications. */
@@ -34,6 +36,7 @@ export const ZERO_METRICS: LoggerMetrics = Object.freeze({
     dispatched: 0,
     filtered: 0,
     transportErrors: 0,
+    thrownErrors: 0,
 });
 
 /** Mutable backing store used internally before exposing read-only snapshots. */

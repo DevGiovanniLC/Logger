@@ -88,12 +88,14 @@ export class Logger {
             dispatched: 0,
             filtered: 0,
             transportErrors: 0,
+            thrownErrors: 0,
         };
         this.metricsCollector = {
             recordBuilt: () => this.recordMetric('built'),
             recordDispatched: () => this.recordMetric('dispatched'),
             recordFiltered: () => this.recordMetric('filtered'),
             recordTransportError: () => this.recordMetric('transportErrors'),
+            recordThrown: () => this.recordMetric('thrownErrors'),
         };
 
         const dispatcherKey = normalizeDispatcher(options?.dispatcher);
@@ -317,9 +319,9 @@ export class Logger {
      */
     private snapshotMetrics(): LoggerMetrics {
         if (!this.metricsState) return ZERO_METRICS;
-        const { built, dispatched, filtered, transportErrors } =
+        const { built, dispatched, filtered, transportErrors, thrownErrors } =
             this.metricsState;
-        return { built, dispatched, filtered, transportErrors };
+        return { built, dispatched, filtered, transportErrors, thrownErrors };
     }
 
     /**
@@ -391,6 +393,7 @@ export class Logger {
         stackContext?: Function,
     ): Log | never {
         if (input instanceof Error) {
+            this.metricsCollector?.recordThrown();
             captureStack(input, stackContext);
             throw input;
         }
@@ -399,6 +402,7 @@ export class Logger {
             const normalizedMessage =
                 message === undefined ? undefined : normalizeMessage(message);
             const err = buildError(subject, input, normalizedMessage, opt);
+            this.metricsCollector?.recordThrown();
             captureStack(err, stackContext);
             throw err;
         }
