@@ -21,9 +21,9 @@ export class ConsoleTransport extends LogTransport {
         const missingMethods =
             typeof globalConsole === 'object'
                 ? (['error', 'warn', 'info', 'debug'] as const).filter(
-                      (method) =>
-                          typeof (globalConsole as any)[method] !== 'function',
-                  )
+                    (method) =>
+                        typeof (globalConsole as any)[method] !== 'function',
+                )
                 : ['error', 'warn', 'info', 'debug'];
         if (!globalConsole || missingMethods.length > 0) {
             requireConsole(ConsoleTransport, missingMethods);

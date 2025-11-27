@@ -50,7 +50,7 @@ const levelColorMap: Record<LevelIndex, ColorFn> = {
     2: (text) => color.red(text),
     3: (text) => color.brightMagenta(text),
     4: (text) => color.yellow(text),
-    5: (text) => color.brightYellow(text),
+    5: (text) => color.brightCyan(text),
     6: (text) => color.cyan(text),
     7: (text) => color.italic(text),
     8: identity,

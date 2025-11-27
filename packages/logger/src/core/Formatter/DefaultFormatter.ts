@@ -23,14 +23,14 @@ const ASCII_TITLES: readonly TitleInfo[] = [
 ] as const;
 
 const EMOJI_TITLES: readonly TitleInfo[] = [
-    { icon: '\u{1F198}', label: 'EMERGENCY' },
-    { icon: '\u{1F6A8}', label: 'ALERT' },
-    { icon: '\u{1F525}', label: 'CRITICAL' },
-    { icon: '\u{26D4}\u{FE0F}', label: 'ERROR' },
-    { icon: '\u{26A0}\u{FE0F} ‎', label: 'WARN' },
+    { icon: '\u{1F198} ', label: 'EMERGENCY' },
+    { icon: '\u{1F6A8} ', label: 'ALERT' },
+    { icon: '\u{1F525} ', label: 'CRITICAL' },
+    { icon: '\u{26D4}\u{FE0F} ', label: 'ERROR' },
+    { icon: '\u{26A0}\u{FE0F} ‎ ', label: 'WARN' },
     { icon: '\u{1F4E3}', label: 'NOTICE' },
-    { icon: '\u{2139}\u{FE0F} ‎', label: 'INFO' },
-    { icon: '\u{1F41E}', label: 'DEBUG' },
+    { icon: '\u{2139}\u{FE0F} ‎ ', label: 'INFO' },
+    { icon: '\u{1F41E} ', label: 'DEBUG' },
 ] as const;
 
 const TITLE_SETS = {
@@ -87,11 +87,11 @@ export class DefaultFormatter implements LogFormatter {
         const id = `#${String(log.id).padStart(5, '0')}`;
         const title = this.titles[log.level] ?? DEFAULT_TITLE;
         const decoratedTitle = title.icon
-            ? `${title.icon} ${title.label}`
+            ? `${title.icon}${title.label}`
             : title.label;
         const timestamp = this.dateFormatter.format(log.timeStamp);
         const coloredHeader = this.colorize(log.level)(
-            `${id} - ${decoratedTitle} (${log.subject}):`,
+            `${id}-${decoratedTitle}(${log.subject}):`,
         );
         const header = `${coloredHeader}`;
         const body = `${log.message} - ${timestamp}`;
