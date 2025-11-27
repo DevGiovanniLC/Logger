@@ -7,6 +7,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { ConsoleTransport, MemoryTransport } from "@core/Transport";
 import { DefaultFormatter } from "@core/Formatter/DefaultFormatter";
 
+const stripAnsi = (text: string): string => text.replace(/\u001B\[[0-9;]*m/g, "");
+
 describe("Logger", () => {
     afterEach(() => {
         vi.restoreAllMocks();
@@ -36,6 +38,7 @@ describe("Logger", () => {
                 dispatched: 1,
                 filtered: 0,
                 transportErrors: 0,
+                thrownErrors: 0,
             });
         });
 
@@ -101,6 +104,7 @@ describe("Logger", () => {
                 dispatched: 0,
                 filtered: 1,
                 transportErrors: 0,
+                thrownErrors: 0,
             });
             expect(onUpdate).toHaveBeenCalledTimes(2);
             expect(onUpdate).toHaveBeenLastCalledWith({
@@ -108,6 +112,7 @@ describe("Logger", () => {
                 dispatched: 0,
                 filtered: 1,
                 transportErrors: 0,
+                thrownErrors: 0,
             });
         });
 
@@ -353,7 +358,7 @@ describe("Logger", () => {
 
                 const output = errorSpy.mock.calls[0][0] as string;
                 expect(output).toContain("\u001B[");
-                expect(output).toContain("ERROR (ColorTransport): payload");
+                expect(stripAnsi(output)).toContain("ERROR (ColorTransport): payload");
             });
 
             it("should combine color and emojis when using console-styled transport", () => {
@@ -365,7 +370,7 @@ describe("Logger", () => {
                 const output = infoSpy.mock.calls[0][0] as string;
                 expect(output).toContain("\u001B[");
                 expect(output).toContain("\u{1F4E3}");
-                expect(output).toMatch(/NOTICE \(StyledTransport\): payload/);
+                expect(stripAnsi(output)).toMatch(/NOTICE \(StyledTransport\): payload/);
             });
         });
     });
