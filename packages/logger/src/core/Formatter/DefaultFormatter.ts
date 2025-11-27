@@ -90,8 +90,12 @@ export class DefaultFormatter implements LogFormatter {
             ? `${title.icon} ${title.label}`
             : title.label;
         const timestamp = this.dateFormatter.format(log.timeStamp);
-        const message = `${id} - ${decoratedTitle} (${log.subject}): ${log.message} - ${timestamp}`;
-        return this.colorize(log.level)(message);
+        const coloredHeader = this.colorize(log.level)(
+            `${id} - ${decoratedTitle} (${log.subject}):`,
+        );
+        const header = `${coloredHeader}`;
+        const body = `${log.message} - ${timestamp}`;
+        return `${header} ${body}`;
     }
 
     /**
