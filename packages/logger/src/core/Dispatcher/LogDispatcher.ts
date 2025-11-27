@@ -21,6 +21,13 @@ export abstract class LogDispatcher {
     }
 
     /**
+     * Expose the current minimum level threshold.
+     */
+    public get threshold(): Level {
+        return this.minLevel;
+    }
+
+    /**
      * Deliver a log entry to the configured transports.
      * @param log Structured log entry ready for emission.
      */

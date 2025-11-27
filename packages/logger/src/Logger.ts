@@ -392,6 +392,11 @@ export class Logger {
         opt?: ErrorOptions,
         stackContext?: Function,
     ): Log | never {
+        // Respect minLevel: if below threshold, treat as a filtered log instead of throwing.
+        if (level > this.dispatcher.threshold) {
+            return this.emit(level, subject, input);
+        }
+
         if (input instanceof Error) {
             this.metricsCollector?.recordThrown();
             captureStack(input, stackContext);
