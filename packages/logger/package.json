@@ -1,6 +1,6 @@
 {
-    "name": "@giodev/logger",
-    "version": "1.0.0",
+    "name": "@giolc/logger",
+    "version": "0.1.2",
     "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
@@ -35,6 +35,8 @@
         "format": "prettier --write \"src/**/*.{ts,html,css,scss,json}\""
     },
     "files": [
-        "dist"
+        "dist",
+        "README.md",
+        "LICENSE"
     ]
 }
