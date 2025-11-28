@@ -17,9 +17,6 @@
 - Utilities to normalize messages, build and throw errors, and style text.
 - `AppLogger.reset()` to clear singleton state between tests or runtime reconfiguration.
 
-### Status
-`@giodev/logger` is in active beta: transports and dispatchers are functional, but HTTP/file persistence still lack enterprise features (retry backoff, persistent queues, rotation/compression), and the RFC 5424 surface is incomplete (no structured data or facilities yet). Expect changes until the roadmap below lands.
-
 ### Repository Structure
 - `packages/logger`: source code, tests, and package build.
 - Root scripts: `build`, `pack`, `start`, `test`, `clean`, `update`.
@@ -102,14 +99,6 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - `npm run build`: creates CJS/ESM/d.ts bundles in `dist` with tsup.
 - `npm run pack`: generates `giodev-logger-1.0.0.tgz`.
 
-### Roadmap
-- Expand test coverage (transports, dispatchers, formats).
-- Complete RFC 5424 compliance (facility codes, structured data payloads).
-- Harden `HttpTransport` (persistent queue, retries with backoff/jitter, auth helpers).
-- Make `TransportResolver` extensible with custom factories/presets (`http`, `memory`, user modules).
-- Extend metrics with richer telemetry (per-level counters, latency histograms, Prometheus/OpenTelemetry hooks).
-- Add rotation/compression/async writes to `FileTransport` plus optional uploads to S3/Blob storage.
-
 ---
 
 ## Español
@@ -126,9 +115,6 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 - Metricas (`built`, `dispatched`, `filtered`, `transportErrors`) con callback en vivo.
 - Utilidades para normalizar mensajes, construir y lanzar errores y estilizar texto.
 - `AppLogger.reset()` para limpiar el estado singleton entre pruebas o reconfiguraciones.
-
-### Estado
-`@giodev/logger` esta en beta activa: los transportes/dispatchers funcionan, pero HTTP y archivo aun no ofrecen features empresariales (backoff, colas persistentes, rotacion/compresion) y el RFC 5424 sigue incompleto (sin structured data ni facilities). Habra cambios hasta completar la hoja de ruta.
 
 ### Estructura del Repositorio
 - `packages/logger`: codigo fuente, pruebas y build del paquete.
@@ -211,11 +197,3 @@ Activa con `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Contador
 ### Build y Publicación
 - `npm run build`: crea bundles CJS/ESM/d.ts en `dist` con tsup.
 - `npm run pack`: genera `giodev-logger-1.0.0.tgz`.
-
-### Hoja de Ruta
-- Expandir cobertura de pruebas (transportes, dispatchers, formatos).
-- Completar cumplimiento RFC 5424 (facility codes, structured data).
-- Robustecer `HttpTransport` (cola persistente, reintentos con backoff/jitter, helpers de autenticacion).
-- Hacer `TransportResolver` extensible con factories/presets (`http`, `memory`, modulos propios).
-- Enriquecer las metricas (contadores por nivel, histogramas de latencia, hooks Prometheus/OpenTelemetry).
-- Agregar rotacion/compresion/escritura asincronica a `FileTransport` y uploads opcionales a S3/Blob.
