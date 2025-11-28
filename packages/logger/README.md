@@ -1,11 +1,11 @@
-# @giodev/logger
+# @giolc/logger
 <img width="605" height="177" alt="image" src="https://github.com/user-attachments/assets/d33cef0d-51e2-491b-aa17-5d5d848cdea8" />
 <img width="604" height="185" alt="image" src="https://github.com/user-attachments/assets/33be268f-ecdc-492a-8fca-06998b1115e6" />
 
 ## English
 
 ### Overview
-`@giodev/logger` is a logging toolkit written in TypeScript that honors the RFC 5424 severity levels and prioritizes composability. It offers contextual logging, interchangeable transports/formatters, synchronous and reactive dispatch strategies, plus optional metrics.
+`@giolc/logger` is a logging toolkit written in TypeScript that honors the RFC 5424 severity levels and prioritizes composability. It offers contextual logging, interchangeable transports/formatters, synchronous and reactive dispatch strategies, plus optional metrics.
 
 ### Features
 - RFC 5424 levels (`Emergency` through `Debug`) with typed helpers.
@@ -24,15 +24,15 @@
 ### Installation & Scripts
 ```bash
 npm install
-npm run build    # Builds @giodev/logger with tsup
+npm run build    # Builds @giolc/logger with tsup
 npm run pack     # Builds + packs the library
 npm run test     # Runs Vitest under packages/logger
 ```
 
 ### Usage Example
 ```ts
-import { Logger, Level } from '@giodev/logger'
-import { MemoryTransport } from '@giodev/logger/Transport'
+import { Logger, Level } from '@giolc/logger'
+import { MemoryTransport } from '@giolc/logger/Transport'
 
 const memory = new MemoryTransport({ maxBufferSize: 200 })
 const logger = new Logger({
@@ -49,7 +49,7 @@ authLogger.critical(Error, 'Boom') // throws the error
 
 ### AppLogger Singleton
 ```ts
-import { AppLogger } from '@giodev/logger'
+import { AppLogger } from '@giolc/logger'
 
 AppLogger.init({ transports: ['console'], metrics: { enabled: true } })
 AppLogger.warn('Warming up cache')
@@ -97,14 +97,14 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 
 ### Build & Publication
 - `npm run build`: creates CJS/ESM/d.ts bundles in `dist` with tsup.
-- `npm run pack`: generates `giodev-logger-1.0.0.tgz`.
+- `npm run pack`: generates `giolc-logger-x.x.x.tgz`.
 
 ---
 
 ## Español
 
 ### Descripcion General
-`@giodev/logger` es un toolkit de logging escrito en TypeScript que respeta los niveles de severidad del RFC 5424 y prioriza la componibilidad. Ofrece logging contextual, transportes/formatters intercambiables, estrategias de dispatch sincronicas y reactivas, ademas de metricas opcionales.
+`@giolc/logger` es un toolkit de logging escrito en TypeScript que respeta los niveles de severidad del RFC 5424 y prioriza la componibilidad. Ofrece logging contextual, transportes/formatters intercambiables, estrategias de dispatch sincronicas y reactivas, ademas de metricas opcionales.
 
 ### Caracteristicas
 - Niveles RFC 5424 (`Emergency` a `Debug`) con helpers tipados.
@@ -123,15 +123,15 @@ Enable with `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Counter
 ### Instalacion y Scripts
 ```bash
 npm install
-npm run build    # Compila @giodev/logger con tsup
+npm run build    # Compila @giolc/logger con tsup
 npm run pack     # Compila + empaqueta
 npm run test     # Ejecuta Vitest en packages/logger
 ```
 
 ### Ejemplo de Uso
 ```ts
-import { Logger, Level } from '@giodev/logger'
-import { MemoryTransport } from '@giodev/logger/Transport'
+import { Logger, Level } from '@giolc/logger'
+import { MemoryTransport } from '@giolc/logger/Transport'
 
 const memoria = new MemoryTransport({ maxBufferSize: 200 })
 const logger = new Logger({
@@ -148,7 +148,7 @@ authLogger.critical(Error, 'Boom') // lanza el error
 
 ### Singleton AppLogger
 ```ts
-import { AppLogger } from '@giodev/logger'
+import { AppLogger } from '@giolc/logger'
 
 AppLogger.init({ transports: ['console'], metrics: { enabled: true } })
 AppLogger.warn('Calentando caché')
@@ -196,4 +196,4 @@ Activa con `metrics: { enabled: true, onUpdate?: (snapshot) => void }`. Contador
 
 ### Build y Publicación
 - `npm run build`: crea bundles CJS/ESM/d.ts en `dist` con tsup.
-- `npm run pack`: genera `giodev-logger-1.0.0.tgz`.
+- `npm run pack`: genera `giolc-logger-x.x.x.tgz`.
